@@ -10,6 +10,7 @@ import {
   Store,
   Utensils,
   Wallet,
+  RefreshCcw,
 } from "lucide-react";
 
 type MenuItem = {
@@ -18,6 +19,7 @@ type MenuItem = {
   price?: number;
   status?: string;
   is_available?: boolean;
+  isAvailable?: boolean;
 };
 
 type OrderItem = {
@@ -30,7 +32,21 @@ type OrderItem = {
   total?: number;
   status?: string;
   created_at?: string;
+  createdAt?: string;
 };
+
+function getArrayFromResponse(response: any) {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.data?.data)) return response.data.data;
+  if (Array.isArray(response?.menus)) return response.menus;
+  if (Array.isArray(response?.data?.menus)) return response.data.menus;
+  if (Array.isArray(response?.orders)) return response.orders;
+  if (Array.isArray(response?.data?.orders)) return response.data.orders;
+  if (Array.isArray(response?.items)) return response.items;
+
+  return [];
+}
 
 export default function VendorDashboardPage() {
   const [menus, setMenus] = useState<MenuItem[]>([]);
@@ -52,6 +68,10 @@ export default function VendorDashboardPage() {
     return "";
   }
 
+  function getToken() {
+    return getCookie("accessToken") || getCookie("accesstoken");
+  }
+
   function formatRupiah(value: number) {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -64,31 +84,53 @@ export default function VendorDashboardPage() {
     try {
       setLoading(true);
 
-      const token = getCookie("accessToken");
+      if (!BASE_API_URL) {
+        alert("NEXT_PUBLIC_BASE_API_URL belum diisi");
+        return;
+      }
+
+      const token = getToken();
+
+      if (!token) {
+        alert("Token tidak ditemukan. Silakan login ulang sebagai vendor.");
+        return;
+      }
 
       const menuRes = await fetch(`${BASE_API_URL}/api/vendor/menus`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      });
-
-      const orderRes = await fetch(`${BASE_API_URL}/api/vendor/orders`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        cache: "no-store",
       });
 
       if (menuRes.ok) {
         const menuData = await menuRes.json();
-        setMenus(menuData.data || menuData.menus || menuData || []);
+        setMenus(getArrayFromResponse(menuData));
+      } else {
+        setMenus([]);
       }
 
-      if (orderRes.ok) {
-        const orderData = await orderRes.json();
-        setOrders(orderData.data || orderData.orders || orderData || []);
+      try {
+        const orderRes = await fetch(`${BASE_API_URL}/api/vendor/orders`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-store",
+        });
+
+        if (orderRes.ok) {
+          const orderData = await orderRes.json();
+          setOrders(getArrayFromResponse(orderData));
+        } else {
+          setOrders([]);
+        }
+      } catch {
+        setOrders([]);
       }
     } catch (error) {
       console.error("Gagal mengambil data vendor:", error);
+      setMenus([]);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -101,7 +143,12 @@ export default function VendorDashboardPage() {
   const totalMenu = menus.length;
 
   const activeMenu = menus.filter((menu) => {
-    return menu.status === "active" || menu.is_available === true;
+    return (
+      menu.status === "active" ||
+      menu.status === "available" ||
+      menu.is_available === true ||
+      menu.isAvailable === true
+    );
   }).length;
 
   const pendingOrders = orders.filter((order) => {
@@ -127,81 +174,104 @@ export default function VendorDashboardPage() {
   const latestOrders = orders.slice(0, 5);
 
   return (
-    <main className="min-h-screen bg-gray-100 p-4 md:p-8">
+    <main className="min-h-screen bg-[#fff7f7] p-4 text-gray-900 md:p-8">
+      <div className="pointer-events-none fixed inset-0 -z-10">
+        <div className="absolute left-[-120px] top-[-120px] h-[420px] w-[420px] rounded-full bg-[#7f1d1d]/20 blur-3xl" />
+        <div className="absolute right-[-140px] top-[120px] h-[480px] w-[480px] rounded-full bg-[#991b1b]/20 blur-3xl" />
+      </div>
+
       <section className="mx-auto max-w-7xl">
         {/* HEADER */}
-        <div className="mb-8 rounded-2xl bg-white p-6 shadow-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="mb-8 overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#991b1b] via-[#7f1d1d] to-[#450a0a] p-7 text-white shadow-2xl shadow-red-900/20">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div>
-              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-red-100 text-red-600">
-                <Store size={24} />
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-bold text-red-50 backdrop-blur">
+                <Store className="h-4 w-4" />
+                Vendor Panel
               </div>
 
-              <h1 className="text-2xl font-bold text-gray-800 md:text-3xl">
+              <h1 className="text-3xl font-black tracking-tight md:text-4xl">
                 Vendor Dashboard
               </h1>
 
-              <p className="mt-2 text-sm text-gray-500">
-                Kelola menu makanan, pantau pesanan, dan lihat pendapatan kantin.
+              <p className="mt-2 max-w-xl text-sm leading-6 text-red-100">
+                Kelola menu makanan, pantau pesanan, dan lihat ringkasan data
+                kantin kamu.
               </p>
             </div>
 
-            <Link
-              href="/vendor/menus/add"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
-            >
-              <Plus size={18} />
-              Tambah Menu
-            </Link>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={fetchVendorData}
+                disabled={loading}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/15 px-5 py-3 text-sm font-black text-white backdrop-blur transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                <RefreshCcw
+                  size={16}
+                  className={loading ? "animate-spin" : ""}
+                />
+                Refresh
+              </button>
+
+              <Link
+                href="/vendor/menus"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-[#7f1d1d] shadow-lg transition hover:scale-105"
+              >
+                <Plus size={18} />
+                Tambah Menu
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* STAT CARD */}
         <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-4">
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
-              <Utensils size={22} />
+          <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
+              <Utensils size={23} />
             </div>
 
-            <p className="text-sm text-gray-500">Total Menu</p>
+            <p className="text-sm font-semibold text-gray-500">Total Menu</p>
 
-            <h2 className="mt-2 text-3xl font-bold text-gray-800">
+            <h2 className="mt-2 text-4xl font-black text-[#7f1d1d]">
               {loading ? "..." : totalMenu}
             </h2>
           </div>
 
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-green-100 text-green-600">
-              <ShoppingBag size={22} />
+          <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-green-100 text-green-700">
+              <ShoppingBag size={23} />
             </div>
 
-            <p className="text-sm text-gray-500">Menu Aktif</p>
+            <p className="text-sm font-semibold text-gray-500">Menu Aktif</p>
 
-            <h2 className="mt-2 text-3xl font-bold text-gray-800">
+            <h2 className="mt-2 text-4xl font-black text-green-700">
               {loading ? "..." : activeMenu}
             </h2>
           </div>
 
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-yellow-100 text-yellow-600">
-              <Clock size={22} />
+          <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
+              <Clock size={23} />
             </div>
 
-            <p className="text-sm text-gray-500">Pesanan Masuk</p>
+            <p className="text-sm font-semibold text-gray-500">
+              Pesanan Masuk
+            </p>
 
-            <h2 className="mt-2 text-3xl font-bold text-gray-800">
+            <h2 className="mt-2 text-4xl font-black text-[#7f1d1d]">
               {loading ? "..." : pendingOrders}
             </h2>
           </div>
 
-          <div className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-purple-100 text-purple-600">
-              <Wallet size={22} />
+          <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
+              <Wallet size={23} />
             </div>
 
-            <p className="text-sm text-gray-500">Pendapatan</p>
+            <p className="text-sm font-semibold text-gray-500">Pendapatan</p>
 
-            <h2 className="mt-2 text-2xl font-bold text-gray-800">
+            <h2 className="mt-2 text-2xl font-black text-[#7f1d1d]">
               {loading ? "..." : formatRupiah(totalIncome)}
             </h2>
           </div>
@@ -211,67 +281,71 @@ export default function VendorDashboardPage() {
         <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
           <Link
             href="/vendor/menus"
-            className="group rounded-2xl bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+            className="group rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-6 shadow-lg shadow-red-900/5 transition hover:-translate-y-1 hover:shadow-xl"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <h3 className="font-bold text-gray-800">Kelola Menu</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Tambah, edit, dan aktifkan menu.
+                <h3 className="text-lg font-black text-gray-950">
+                  Kelola Menu
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-gray-500">
+                  Tambah, edit, dan aktifkan menu makanan.
                 </p>
               </div>
 
               <ArrowRight
-                size={20}
-                className="text-gray-400 transition group-hover:translate-x-1 group-hover:text-red-600"
+                size={22}
+                className="text-[#7f1d1d] transition group-hover:translate-x-1"
               />
             </div>
           </Link>
 
           <Link
             href="/vendor/orders"
-            className="group rounded-2xl bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+            className="group rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-6 shadow-lg shadow-red-900/5 transition hover:-translate-y-1 hover:shadow-xl"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <h3 className="font-bold text-gray-800">Pesanan</h3>
-                <p className="mt-1 text-sm text-gray-500">
+                <h3 className="text-lg font-black text-gray-950">Pesanan</h3>
+                <p className="mt-2 text-sm leading-6 text-gray-500">
                   Lihat dan proses pesanan customer.
                 </p>
               </div>
 
               <ArrowRight
-                size={20}
-                className="text-gray-400 transition group-hover:translate-x-1 group-hover:text-red-600"
+                size={22}
+                className="text-[#7f1d1d] transition group-hover:translate-x-1"
               />
             </div>
           </Link>
 
           <Link
             href="/vendor/profile"
-            className="group rounded-2xl bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+            className="group rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-6 shadow-lg shadow-red-900/5 transition hover:-translate-y-1 hover:shadow-xl"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <h3 className="font-bold text-gray-800">Profil Vendor</h3>
-                <p className="mt-1 text-sm text-gray-500">
+                <h3 className="text-lg font-black text-gray-950">
+                  Profil Vendor
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-gray-500">
                   Atur informasi kantin kamu.
                 </p>
               </div>
 
               <ArrowRight
-                size={20}
-                className="text-gray-400 transition group-hover:translate-x-1 group-hover:text-red-600"
+                size={22}
+                className="text-[#7f1d1d] transition group-hover:translate-x-1"
               />
             </div>
           </Link>
         </div>
 
         {/* LATEST ORDER */}
-        <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b p-5">
+        <div className="overflow-hidden rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white shadow-xl shadow-red-900/5">
+          <div className="flex items-center justify-between border-b border-[#7f1d1d]/10 bg-white p-5">
             <div>
-              <h2 className="text-lg font-bold text-gray-800">
+              <h2 className="text-lg font-black text-gray-950">
                 Pesanan Terbaru
               </h2>
 
@@ -282,77 +356,81 @@ export default function VendorDashboardPage() {
 
             <Link
               href="/vendor/orders"
-              className="text-sm font-semibold text-red-600 hover:text-red-700"
+              className="text-sm font-black text-[#7f1d1d] transition hover:text-[#450a0a]"
             >
               Lihat semua
             </Link>
           </div>
 
           {loading ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-10 text-center text-sm font-semibold text-gray-500">
               Mengambil data...
             </div>
           ) : latestOrders.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-10 text-center text-sm font-semibold text-gray-500">
               Belum ada pesanan.
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[700px] border-collapse">
                 <thead>
-                  <tr className="bg-gray-50 text-left text-sm text-gray-600">
-                    <th className="p-4">No</th>
-                    <th className="p-4">Customer</th>
-                    <th className="p-4">Total</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4">Tanggal</th>
+                  <tr className="bg-[#fff7f7] text-left text-sm">
+                    <th className="p-4 font-black text-[#7f1d1d]">No</th>
+                    <th className="p-4 font-black text-[#7f1d1d]">
+                      Customer
+                    </th>
+                    <th className="p-4 font-black text-[#7f1d1d]">Total</th>
+                    <th className="p-4 font-black text-[#7f1d1d]">Status</th>
+                    <th className="p-4 font-black text-[#7f1d1d]">Tanggal</th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {latestOrders.map((order, index) => (
-                    <tr
-                      key={order.id}
-                      className="border-t text-sm text-gray-700 hover:bg-gray-50"
-                    >
-                      <td className="p-4">{index + 1}</td>
+                  {latestOrders.map((order, index) => {
+                    const orderDate = order.created_at || order.createdAt;
 
-                      <td className="p-4 font-semibold">
-                        {order.customer_name || order.customer?.name || "-"}
-                      </td>
+                    return (
+                      <tr
+                        key={order.id}
+                        className="border-t border-[#7f1d1d]/10 text-sm text-gray-700 hover:bg-[#fff7f7]"
+                      >
+                        <td className="p-4 font-semibold">{index + 1}</td>
 
-                      <td className="p-4">
-                        {formatRupiah(
-                          Number(order.total_price || order.total || 0)
-                        )}
-                      </td>
+                        <td className="p-4 font-black text-gray-950">
+                          {order.customer_name || order.customer?.name || "-"}
+                        </td>
 
-                      <td className="p-4">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            order.status === "completed" ||
-                            order.status === "done" ||
-                            order.status === "paid"
-                              ? "bg-green-100 text-green-600"
-                              : order.status === "cancelled" ||
-                                  order.status === "canceled"
-                                ? "bg-red-100 text-red-600"
-                                : "bg-yellow-100 text-yellow-600"
-                          }`}
-                        >
-                          {order.status || "pending"}
-                        </span>
-                      </td>
+                        <td className="p-4 font-medium">
+                          {formatRupiah(
+                            Number(order.total_price || order.total || 0)
+                          )}
+                        </td>
 
-                      <td className="p-4">
-                        {order.created_at
-                          ? new Date(order.created_at).toLocaleDateString(
-                              "id-ID"
-                            )
-                          : "-"}
-                      </td>
-                    </tr>
-                  ))}
+                        <td className="p-4">
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-black ${
+                              order.status === "completed" ||
+                              order.status === "done" ||
+                              order.status === "paid"
+                                ? "bg-green-100 text-green-700"
+                                : order.status === "cancelled" ||
+                                    order.status === "canceled"
+                                  ? "bg-red-100 text-[#7f1d1d]"
+                                  : "bg-[#fff0f0] text-[#7f1d1d]"
+                            }`}
+                          >
+                            {order.status || "pending"}
+                          </span>
+                        </td>
+
+                        <td className="p-4 font-medium">
+                          {orderDate
+                            ? new Date(orderDate).toLocaleDateString("id-ID")
+                            : "-"}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

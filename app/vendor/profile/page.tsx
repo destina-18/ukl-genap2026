@@ -1,7 +1,16 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { Camera, Mail, Phone, Save, Store } from "lucide-react";
+import {
+  Camera,
+  Mail,
+  Phone,
+  Save,
+  Store,
+  RefreshCcw,
+  BadgeCheck,
+  Hash,
+} from "lucide-react";
 
 type VendorProfile = {
   id: number;
@@ -45,16 +54,31 @@ export default function VendorProfilePage() {
     return "";
   }
 
+  function getToken() {
+    return getCookie("accessToken") || getCookie("accesstoken");
+  }
+
   async function fetchProfile() {
     try {
       setLoading(true);
 
-      const token = getCookie("accessToken");
+      if (!BASE_API_URL) {
+        alert("NEXT_PUBLIC_BASE_API_URL belum diisi");
+        return;
+      }
+
+      const token = getToken();
+
+      if (!token) {
+        alert("Token tidak ditemukan. Silakan login ulang sebagai vendor.");
+        return;
+      }
 
       const res = await fetch(`${BASE_API_URL}/api/vendor/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        cache: "no-store",
       });
 
       const data = await res.json();
@@ -65,7 +89,7 @@ export default function VendorProfilePage() {
         return;
       }
 
-      const profile = data.data;
+      const profile = data.data || data;
 
       setVendor(profile);
       setCanteenName(profile.canteenName || "");
@@ -84,7 +108,17 @@ export default function VendorProfilePage() {
     try {
       setSaving(true);
 
-      const token = getCookie("accessToken");
+      if (!BASE_API_URL) {
+        alert("NEXT_PUBLIC_BASE_API_URL belum diisi");
+        return;
+      }
+
+      const token = getToken();
+
+      if (!token) {
+        alert("Token tidak ditemukan. Silakan login ulang sebagai vendor.");
+        return;
+      }
 
       const res = await fetch(`${BASE_API_URL}/api/vendor/profile`, {
         method: "PATCH",
@@ -125,12 +159,19 @@ export default function VendorProfilePage() {
     try {
       setUploading(true);
 
-      const token = getCookie("accessToken");
+      if (!BASE_API_URL) {
+        alert("NEXT_PUBLIC_BASE_API_URL belum diisi");
+        return;
+      }
+
+      const token = getToken();
+
+      if (!token) {
+        alert("Token tidak ditemukan. Silakan login ulang sebagai vendor.");
+        return;
+      }
 
       const formData = new FormData();
-
-      // Backend kamu tidak menerima field "logo".
-      // Jadi field upload-nya diganti menjadi "file".
       formData.append("file", logoFile);
 
       const res = await fetch(`${BASE_API_URL}/api/vendor/logo`, {
@@ -165,41 +206,61 @@ export default function VendorProfilePage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gray-100 p-4 md:p-8">
-      <section className="mx-auto max-w-5xl">
-        {/* HEADER */}
-        <div className="mb-8 rounded-2xl bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-100 text-red-600">
-              <Store size={28} />
-            </div>
+    <main className="min-h-screen bg-[#fff7f7] p-4 text-gray-900 md:p-8">
+      <div className="pointer-events-none fixed inset-0 -z-10">
+        <div className="absolute left-[-120px] top-[-120px] h-[420px] w-[420px] rounded-full bg-[#7f1d1d]/20 blur-3xl" />
+        <div className="absolute right-[-140px] top-[120px] h-[480px] w-[480px] rounded-full bg-[#991b1b]/20 blur-3xl" />
+      </div>
 
+      <section className="mx-auto max-w-6xl">
+        {/* HEADER */}
+        <div className="mb-8 overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#991b1b] via-[#7f1d1d] to-[#450a0a] p-7 text-white shadow-2xl shadow-red-900/20">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-800 md:text-3xl">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-bold text-red-50 backdrop-blur">
+                <Store className="h-4 w-4" />
+                Vendor Profile
+              </div>
+
+              <h1 className="text-3xl font-black tracking-tight md:text-4xl">
                 Profil Vendor
               </h1>
 
-              <p className="mt-1 text-sm text-gray-500">
-                Kelola informasi kantin dan logo vendor kamu.
+              <p className="mt-2 max-w-xl text-sm leading-6 text-red-100">
+                Kelola informasi kantin, deskripsi, dan logo vendor agar
+                tampilan kantinmu terlihat lebih menarik.
               </p>
             </div>
+
+            <button
+              onClick={fetchProfile}
+              disabled={loading}
+              className="inline-flex w-fit items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-[#7f1d1d] shadow-lg transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              <RefreshCcw size={16} className={loading ? "animate-spin" : ""} />
+              Refresh
+            </button>
           </div>
         </div>
 
         {loading ? (
-          <div className="rounded-2xl bg-white p-8 text-center text-gray-500 shadow-sm">
+          <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-10 text-center text-sm font-semibold text-gray-500 shadow-xl shadow-red-900/5">
             Mengambil data profil...
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* LOGO CARD */}
-            <div className="rounded-2xl bg-white p-6 shadow-sm">
-              <h2 className="mb-5 text-lg font-bold text-gray-800">
+            <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-6 shadow-xl shadow-red-900/5">
+              <h2 className="mb-2 text-xl font-black text-gray-950">
                 Logo Vendor
               </h2>
 
+              <p className="mb-6 text-sm leading-6 text-gray-500">
+                Upload logo kantin agar customer lebih mudah mengenali vendormu.
+              </p>
+
               <div className="flex flex-col items-center">
-                <div className="flex h-36 w-36 items-center justify-center overflow-hidden rounded-2xl border bg-gray-50">
+                <div className="flex h-40 w-40 items-center justify-center overflow-hidden rounded-[2rem] border border-[#7f1d1d]/10 bg-[#fff7f7] shadow-inner">
                   {vendor?.logoUrl ? (
                     <img
                       src={vendor.logoUrl}
@@ -207,7 +268,7 @@ export default function VendorProfilePage() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <Camera size={42} className="text-gray-400" />
+                    <Camera size={46} className="text-[#7f1d1d]/50" />
                   )}
                 </div>
 
@@ -217,11 +278,11 @@ export default function VendorProfilePage() {
                   onChange={(e) => {
                     setLogoFile(e.target.files?.[0] || null);
                   }}
-                  className="mt-5 w-full rounded-xl border bg-white px-3 py-2 text-sm"
+                  className="mt-6 w-full rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] px-3 py-2 text-sm file:mr-4 file:rounded-full file:border-0 file:bg-[#7f1d1d] file:px-4 file:py-1 file:text-sm file:font-bold file:text-white"
                 />
 
                 {logoFile && (
-                  <p className="mt-2 text-xs text-gray-500">
+                  <p className="mt-3 rounded-full bg-[#fff0f0] px-4 py-2 text-xs font-bold text-[#7f1d1d]">
                     File dipilih: {logoFile.name}
                   </p>
                 )}
@@ -230,22 +291,28 @@ export default function VendorProfilePage() {
                   type="button"
                   onClick={handleUploadLogo}
                   disabled={uploading}
-                  className="mt-4 w-full rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#991b1b] to-[#450a0a] px-4 py-3 text-sm font-black text-white shadow-lg shadow-red-900/20 transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
                 >
+                  <Camera size={18} />
                   {uploading ? "Mengupload..." : "Upload Logo"}
                 </button>
               </div>
             </div>
 
             {/* FORM PROFILE */}
-            <div className="rounded-2xl bg-white p-6 shadow-sm lg:col-span-2">
-              <h2 className="mb-5 text-lg font-bold text-gray-800">
+            <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-6 shadow-xl shadow-red-900/5 lg:col-span-2">
+              <h2 className="mb-2 text-xl font-black text-gray-950">
                 Informasi Vendor
               </h2>
 
+              <p className="mb-6 text-sm leading-6 text-gray-500">
+                Perbarui nama kantin dan deskripsi agar informasi vendor selalu
+                sesuai.
+              </p>
+
               <form onSubmit={handleUpdateProfile} className="space-y-5">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  <label className="mb-2 block text-sm font-black text-gray-700">
                     Nama Kantin
                   </label>
 
@@ -253,13 +320,13 @@ export default function VendorProfilePage() {
                     type="text"
                     value={canteenName}
                     onChange={(e) => setCanteenName(e.target.value)}
-                    placeholder="Contoh: Pak Yoyok"
-                    className="w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-red-500"
+                    placeholder="Contoh: Kantin Pak Yoyok"
+                    className="w-full rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] px-4 py-3 text-sm font-medium outline-none transition focus:border-[#7f1d1d] focus:bg-white focus:shadow-lg focus:shadow-red-900/5"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  <label className="mb-2 block text-sm font-black text-gray-700">
                     Deskripsi
                   </label>
 
@@ -268,65 +335,69 @@ export default function VendorProfilePage() {
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Contoh: Menjual makanan dan minuman sekolah."
                     rows={4}
-                    className="w-full resize-none rounded-xl border px-4 py-3 text-sm outline-none focus:border-red-500"
+                    className="w-full resize-none rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] px-4 py-3 text-sm font-medium outline-none transition focus:border-[#7f1d1d] focus:bg-white focus:shadow-lg focus:shadow-red-900/5"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className="rounded-xl border bg-gray-50 p-4">
-                    <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  <div className="rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] p-4">
+                    <div className="mb-2 flex items-center gap-2 text-sm font-black text-[#7f1d1d]">
                       <Mail size={17} />
                       Email
                     </div>
 
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm font-medium text-gray-600">
                       {vendor?.user?.email || "-"}
                     </p>
                   </div>
 
-                  <div className="rounded-xl border bg-gray-50 p-4">
-                    <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  <div className="rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] p-4">
+                    <div className="mb-2 flex items-center gap-2 text-sm font-black text-[#7f1d1d]">
                       <Phone size={17} />
                       WhatsApp
                     </div>
 
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm font-medium text-gray-600">
                       {vendor?.user?.whatsappNumber || "-"}
                     </p>
                   </div>
                 </div>
 
-                <div className="rounded-xl border bg-gray-50 p-4">
-                  <p className="text-sm font-semibold text-gray-700">
-                    Nomor Kantin
-                  </p>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] p-4">
+                    <div className="mb-2 flex items-center gap-2 text-sm font-black text-[#7f1d1d]">
+                      <Hash size={17} />
+                      Nomor Kantin
+                    </div>
 
-                  <p className="mt-2 text-sm text-gray-600">
-                    {vendor?.canteenNumber || "-"}
-                  </p>
+                    <p className="text-sm font-medium text-gray-600">
+                      {vendor?.canteenNumber || "-"}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] p-4">
+                    <div className="mb-2 flex items-center gap-2 text-sm font-black text-[#7f1d1d]">
+                      <BadgeCheck size={17} />
+                      Status Vendor
+                    </div>
+
+                    <span
+                      className={`inline-block rounded-full px-3 py-1 text-xs font-black ${
+                        vendor?.isActive
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-[#7f1d1d]"
+                      }`}
+                    >
+                      {vendor?.isActive ? "Aktif" : "Tidak Aktif"}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="rounded-xl border bg-gray-50 p-4">
-                  <p className="text-sm font-semibold text-gray-700">
-                    Status Vendor
-                  </p>
-
-                  <span
-                    className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-semibold ${
-                      vendor?.isActive
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
-                  >
-                    {vendor?.isActive ? "Aktif" : "Tidak Aktif"}
-                  </span>
-                </div>
-
-                <div className="flex justify-end">
+                <div className="flex justify-end pt-2">
                   <button
                     type="submit"
                     disabled={saving}
-                    className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#991b1b] to-[#450a0a] px-6 py-3 text-sm font-black text-white shadow-lg shadow-red-900/20 transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Save size={18} />
                     {saving ? "Menyimpan..." : "Simpan Perubahan"}

@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { LayoutDashboard, Store, LogOut, Utensils } from "lucide-react";
+import { usePathname } from "next/navigation";
+import {
+  LayoutDashboard,
+  Store,
+  LogOut,
+  Utensils,
+  Sparkles,
+} from "lucide-react";
 
 import {
   Sidebar,
@@ -32,45 +39,90 @@ const menuItems = [
 ];
 
 export function AppVendorSidebar() {
+  const pathname = usePathname();
+
   function handleLogout() {
     document.cookie =
       "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie =
+      "accesstoken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie =
+      "role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
 
     window.location.href = "/sign-in";
   }
 
   return (
-    <Sidebar>
-      <SidebarHeader>
-        <div className="px-3 py-2">
-          <h1 className="text-lg font-bold text-red-700">KantinKlik</h1>
-          <p className="text-xs text-muted-foreground">Vendor Panel</p>
+    <Sidebar className="border-r border-[#7f1d1d]/10 bg-[#fff7f7]">
+      <SidebarHeader className="border-b border-[#7f1d1d]/10 bg-[#fff7f7] px-4 py-5">
+        <div className="overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-[#991b1b] via-[#7f1d1d] to-[#450a0a] p-4 text-white shadow-lg shadow-red-900/20">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-xl font-black text-[#7f1d1d] shadow-md">
+              K
+            </div>
+
+            <div>
+              <h1 className="text-lg font-black leading-none">KantinKlik</h1>
+              <p className="mt-1 text-xs font-medium text-red-100">
+                Vendor Panel
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center gap-2 rounded-2xl bg-white/15 px-3 py-2 text-xs font-bold text-red-50 backdrop-blur">
+            <Sparkles className="h-4 w-4" />
+            Kelola menu kantinmu
+          </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
-        <SidebarMenu>
-          {menuItems.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild>
-                <Link href={item.url}>
-                  <item.icon />
-                  <span>{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+      <SidebarContent className="bg-[#fff7f7] px-3 py-5">
+        <SidebarMenu className="space-y-2">
+          {menuItems.map((item) => {
+            const isActive = pathname === item.url;
+
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  asChild
+                  className={`h-12 rounded-2xl px-4 font-bold transition-all ${
+                    isActive
+                      ? "bg-gradient-to-r from-[#991b1b] to-[#450a0a] text-white shadow-lg shadow-red-900/20 hover:bg-[#7f1d1d] hover:text-white"
+                      : "text-gray-600 hover:bg-white hover:text-[#7f1d1d] hover:shadow-md"
+                  }`}
+                >
+                  <Link href={item.url} className="flex items-center gap-3">
+                    <item.icon
+                      className={`h-5 w-5 ${
+                        isActive ? "text-white" : "text-[#7f1d1d]"
+                      }`}
+                    />
+                    <span>{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-[#7f1d1d]/10 bg-[#fff7f7] p-3">
+        <div className="mb-3 rounded-2xl border border-[#7f1d1d]/10 bg-white p-4 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-wide text-[#7f1d1d]">
+            Vendor Mode
+          </p>
+          <p className="mt-1 text-xs leading-5 text-gray-500">
+            Login sebagai vendor untuk mengatur profil dan menu makanan.
+          </p>
+        </div>
+
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleLogout}
-              className="text-red-600 hover:bg-red-50 hover:text-red-700"
+              className="h-12 rounded-2xl px-4 font-bold text-[#7f1d1d] transition hover:bg-red-100 hover:text-[#450a0a]"
             >
-              <LogOut />
+              <LogOut className="h-5 w-5" />
               <span>Log out</span>
             </SidebarMenuButton>
           </SidebarMenuItem>

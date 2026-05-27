@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Store, Users, RefreshCcw, ShoppingBag, Utensils } from "lucide-react";
+import {
+  Store,
+  Users,
+  RefreshCcw,
+  ShoppingBag,
+  Utensils,
+  ShieldCheck,
+  ArrowRight,
+} from "lucide-react";
 
 type Vendor = {
   [key: string]: any;
@@ -72,12 +80,10 @@ export default function AdminDashboardPage() {
       );
 
       const vendorResult = await vendorResponse.json();
-
       console.log("DASHBOARD VENDOR RESPONSE:", vendorResult);
 
       if (vendorResponse.ok) {
-        const vendorArray = getArrayFromResponse(vendorResult);
-        setVendors(vendorArray);
+        setVendors(getArrayFromResponse(vendorResult));
       } else {
         console.log("GAGAL AMBIL VENDOR:", vendorResult);
         setVendors([]);
@@ -94,12 +100,10 @@ export default function AdminDashboardPage() {
         );
 
         const customerResult = await customerResponse.json();
-
         console.log("DASHBOARD CUSTOMER RESPONSE:", customerResult);
 
         if (customerResponse.ok) {
-          const customerArray = getArrayFromResponse(customerResult);
-          setCustomers(customerArray);
+          setCustomers(getArrayFromResponse(customerResult));
         } else {
           console.log("GAGAL AMBIL CUSTOMER:", customerResult);
           setCustomers([]);
@@ -122,98 +126,130 @@ export default function AdminDashboardPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F6F7EF] p-4 md:p-8">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-[#283618] md:text-3xl">
-              Dashboard Admin
-            </h1>
-            <p className="mt-1 text-sm text-[#6B705C]">
-              Ringkasan data KantinKlik.
-            </p>
-          </div>
+    <div className="min-h-screen bg-[#fff7f7] p-4 text-gray-900 md:p-8">
+      <div className="pointer-events-none fixed inset-0 -z-10">
+        <div className="absolute left-[-120px] top-[-120px] h-[420px] w-[420px] rounded-full bg-[#7f1d1d]/20 blur-3xl" />
+        <div className="absolute right-[-140px] top-[120px] h-[480px] w-[480px] rounded-full bg-[#991b1b]/20 blur-3xl" />
+      </div>
 
-          <button
-            onClick={getDashboardData}
-            className="flex w-fit items-center gap-2 rounded-xl bg-[#283618] px-4 py-2 text-sm font-medium text-white hover:bg-[#1f2a12]"
-          >
-            <RefreshCcw size={16} />
-            Refresh
-          </button>
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-8 overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#991b1b] via-[#7f1d1d] to-[#450a0a] p-7 text-white shadow-2xl shadow-red-900/20">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-bold text-red-50 backdrop-blur">
+                <ShieldCheck className="h-4 w-4" />
+                Admin Panel
+              </div>
+
+              <h1 className="text-3xl font-black tracking-tight md:text-4xl">
+                Dashboard Admin
+              </h1>
+
+              <p className="mt-2 max-w-xl text-sm leading-6 text-red-100">
+                Ringkasan data KantinKlik untuk memantau vendor, customer,
+                menu, dan aktivitas sistem.
+              </p>
+            </div>
+
+            <button
+              onClick={getDashboardData}
+              disabled={loading}
+              className="flex w-fit items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-[#7f1d1d] shadow-lg transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              <RefreshCcw size={16} className={loading ? "animate-spin" : ""} />
+              Refresh
+            </button>
+          </div>
         </div>
 
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-2xl border border-[#DDE5B6] bg-white p-5 shadow-sm">
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#DDE5B6] text-[#283618]">
-              <Store size={22} />
+          <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
+              <Store size={23} />
             </div>
-            <p className="text-sm text-[#6B705C]">Total Vendor</p>
-            <h2 className="mt-2 text-3xl font-bold text-[#283618]">
+            <p className="text-sm font-semibold text-gray-500">Total Vendor</p>
+            <h2 className="mt-2 text-4xl font-black text-[#7f1d1d]">
               {loading ? "..." : vendors.length}
             </h2>
           </div>
 
-          <div className="rounded-2xl border border-[#DDE5B6] bg-white p-5 shadow-sm">
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
-              <Users size={22} />
+          <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
+              <Users size={23} />
             </div>
-            <p className="text-sm text-[#6B705C]">Total Customer</p>
-            <h2 className="mt-2 text-3xl font-bold text-[#283618]">
+            <p className="text-sm font-semibold text-gray-500">Total Customer</p>
+            <h2 className="mt-2 text-4xl font-black text-[#7f1d1d]">
               {loading ? "..." : customers.length}
             </h2>
           </div>
 
-          <div className="rounded-2xl border border-[#DDE5B6] bg-white p-5 shadow-sm">
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-orange-100 text-orange-700">
-              <Utensils size={22} />
+          <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
+              <Utensils size={23} />
             </div>
-            <p className="text-sm text-[#6B705C]">Total Menu</p>
-            <h2 className="mt-2 text-3xl font-bold text-[#283618]">0</h2>
+            <p className="text-sm font-semibold text-gray-500">Total Menu</p>
+            <h2 className="mt-2 text-4xl font-black text-[#7f1d1d]">0</h2>
           </div>
 
-          <div className="rounded-2xl border border-[#DDE5B6] bg-white p-5 shadow-sm">
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-purple-100 text-purple-700">
-              <ShoppingBag size={22} />
+          <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
+              <ShoppingBag size={23} />
             </div>
-            <p className="text-sm text-[#6B705C]">Total Order</p>
-            <h2 className="mt-2 text-3xl font-bold text-[#283618]">0</h2>
+            <p className="text-sm font-semibold text-gray-500">Total Order</p>
+            <h2 className="mt-2 text-4xl font-black text-[#7f1d1d]">0</h2>
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Link
             href="/admin/customers"
-            className="rounded-2xl border border-[#DDE5B6] bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+            className="group rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-6 shadow-lg shadow-red-900/5 transition hover:-translate-y-1 hover:shadow-xl"
           >
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
-              <Users size={24} />
+            <div className="mb-5 flex h-13 w-13 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
+              <Users size={25} />
             </div>
-            <h3 className="text-lg font-bold text-[#283618]">
-              Kelola Customer
-            </h3>
-            <p className="mt-1 text-sm text-[#6B705C]">
-              Lihat daftar customer yang sudah terdaftar.
+
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-lg font-black text-gray-950">
+                Kelola Customer
+              </h3>
+              <ArrowRight className="h-5 w-5 text-[#7f1d1d] transition group-hover:translate-x-1" />
+            </div>
+
+            <p className="mt-2 text-sm leading-6 text-gray-500">
+              Lihat daftar customer yang sudah terdaftar di KantinKlik.
             </p>
           </Link>
 
-          <div className="rounded-2xl border border-[#DDE5B6] bg-white p-5 shadow-sm">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 text-orange-700">
-              <Utensils size={24} />
+          <Link
+            href="/admin/vendors"
+            className="group rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-6 shadow-lg shadow-red-900/5 transition hover:-translate-y-1 hover:shadow-xl"
+          >
+            <div className="mb-5 flex h-13 w-13 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
+              <Store size={25} />
             </div>
-            <h3 className="text-lg font-bold text-[#283618]">Menu</h3>
-            <p className="mt-1 text-sm text-[#6B705C]">
-              Data menu belum disambungkan.
-            </p>
-          </div>
 
-          <div className="rounded-2xl border border-[#DDE5B6] bg-white p-5 shadow-sm">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-700">
-              <ShoppingBag size={24} />
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-lg font-black text-gray-950">
+                Kelola Vendor
+              </h3>
+              <ArrowRight className="h-5 w-5 text-[#7f1d1d] transition group-hover:translate-x-1" />
             </div>
-            <h3 className="text-lg font-bold text-[#283618]">Order</h3>
-            <p className="mt-1 text-sm text-[#6B705C]">
-              Data order belum disambungkan.
+
+            <p className="mt-2 text-sm leading-6 text-gray-500">
+              Kelola data vendor kantin, status aktif, dan informasi vendor.
+            </p>
+          </Link>
+
+          <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-6 shadow-lg shadow-red-900/5">
+            <div className="mb-5 flex h-13 w-13 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
+              <Utensils size={25} />
+            </div>
+
+            <h3 className="text-lg font-black text-gray-950">Menu & Order</h3>
+
+            <p className="mt-2 text-sm leading-6 text-gray-500">
+              Data menu dan order belum disambungkan ke dashboard admin.
             </p>
           </div>
         </div>
