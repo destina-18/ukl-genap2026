@@ -34,10 +34,10 @@ export default function Home() {
           Pesan makanan kantin jadi lebih mudah.
         </h2>
 
-         <p className="mt-5 text-lg leading-8 text-gray-600">
-            KantinKlik hadir untuk membuat proses pemesanan makanan di sekolah menjadi
-            lebih cepat, rapi, dan praktis.
-          </p>
+        <p className="mt-6 max-w-2xl text-base leading-8 text-gray-600 md:text-lg">
+          KantinKlik membantu customer memesan makanan, vendor mengelola menu,
+          dan admin mengatur data customer.
+        </p>
 
         <div className="mt-9 flex flex-col gap-4 sm:flex-row">
           <Link

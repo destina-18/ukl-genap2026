@@ -63,17 +63,26 @@ export default function SignInPage() {
         return;
       }
 
-      document.cookie = `accessToken=${token}; path=/`;
-      document.cookie = `role=${role}; path=/`;
+      const finalRole = String(role).toUpperCase();
 
-      if (role === "ADMIN") {
+      // Hapus cookie lama dulu supaya token VENDOR/ADMIN lama tidak nyangkut
+      document.cookie = "accesstoken=; path=/; max-age=0";
+      document.cookie = "accessToken=; path=/; max-age=0";
+      document.cookie = "role=; path=/; max-age=0";
+
+      // Simpan token baru. Dibuat dua nama supaya cocok dengan kode lama & baru.
+      document.cookie = `accessToken=${token}; path=/`;
+      document.cookie = `accesstoken=${token}; path=/`;
+      document.cookie = `role=${finalRole}; path=/`;
+
+      if (finalRole === "ADMIN") {
         window.location.href = "/admin/dashboard";
-      } else if (role === "VENDOR") {
+      } else if (finalRole === "VENDOR") {
         window.location.href = "/vendor/dashboard";
-      } else if (role === "CUSTOMER") {
+      } else if (finalRole === "CUSTOMER") {
         window.location.href = "/customer/dashboard";
       } else {
-        alert(`Role tidak dikenali: ${role}`);
+        alert(`Role tidak dikenali: ${finalRole}`);
       }
     } catch (error) {
       console.error("SIGN IN ERROR:", error);
