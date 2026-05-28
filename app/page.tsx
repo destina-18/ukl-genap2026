@@ -93,13 +93,6 @@ export default function Home() {
               <p className="text-xs text-gray-500">Kantin sekolah digital</p>
             </div>
           </div>
-
-          <Link
-            href="/sign-in"
-            className="rounded-full bg-gradient-to-r from-[#7f1d1d] to-[#450a0a] px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-red-900/20 transition hover:scale-105"
-          >
-            Sign In
-          </Link>
         </div>
       </nav>
 
