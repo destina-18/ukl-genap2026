@@ -1,24 +1,24 @@
-import { AppVendorSidebar } from "@/components/vendor-template/app-sidebar"; 
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+"use client";
 
-export default function VendorLayout({
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppCustomerSidebar } from "@/components/customers-template/app-sidebar"; 
+
+export default function CustomersLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <AppVendorSidebar />
+      <AppCustomerSidebar />
 
-        <main className="flex-1 bg-gray-100">
-          <div className="sticky top-0 z-10 flex h-14 items-center border-b bg-white px-4 md:hidden">
-            <SidebarTrigger />
-          </div>
+      <main className="min-h-screen flex-1 bg-[#fff7f7]">
+        <div className="border-b border-[#7f1d1d]/10 bg-white px-4 py-3">
+          <SidebarTrigger />
+        </div>
 
-          {children}
-        </main>
-      </div>
+        {children}
+      </main>
     </SidebarProvider>
   );
 }

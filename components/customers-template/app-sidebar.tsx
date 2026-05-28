@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
-  Store,
   LogOut,
+  LayoutDashboard,
+  ShoppingCart,
+  ClipboardList,
   Utensils,
-  Sparkles,
+  User,
+  ShieldCheck,
 } from "lucide-react";
 
 import {
@@ -23,27 +25,32 @@ import {
 const menuItems = [
   {
     title: "Dashboard",
-    url: "/vendor/dashboard",
+    url: "/customers/dashboard",
     icon: LayoutDashboard,
   },
   {
-    title: "Profil Vendor",
-    url: "/vendor/profile",
-    icon: Store,
-  },
-  {
-    title: "Menu Makanan",
-    url: "/vendor/menus",
+    title: "Menu",
+    url: "/customers/menu",
     icon: Utensils,
   },
   {
-    title: "Order",
-    url: "/vendor/orders",
-    icon: Utensils,
+    title: "Keranjang",
+    url: "/customers/cart",
+    icon: ShoppingCart,
+  },
+  {
+    title: "Pesanan",
+    url: "/customers/orders",
+    icon: ClipboardList,
+  },
+  {
+    title: "Profile",
+    url: "/customers/profile",
+    icon: User,
   },
 ];
 
-export function AppVendorSidebar() {
+export function AppCustomerSidebar() {
   const pathname = usePathname();
 
   function handleLogout() {
@@ -53,6 +60,10 @@ export function AppVendorSidebar() {
       "accesstoken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     document.cookie =
       "role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("role");
+    localStorage.removeItem("user");
 
     window.location.href = "/sign-in";
   }
@@ -69,14 +80,14 @@ export function AppVendorSidebar() {
             <div>
               <h1 className="text-lg font-black leading-none">KantinKlik</h1>
               <p className="mt-1 text-xs font-medium text-red-100">
-                Vendor Panel
+                Customer Panel
               </p>
             </div>
           </div>
 
           <div className="mt-4 flex items-center gap-2 rounded-2xl bg-white/15 px-3 py-2 text-xs font-bold text-red-50 backdrop-blur">
-            <Sparkles className="h-4 w-4" />
-            Kelola menu kantinmu
+            <ShieldCheck className="h-4 w-4" />
+            Pesan makanan kantin
           </div>
         </div>
       </SidebarHeader>
@@ -84,7 +95,10 @@ export function AppVendorSidebar() {
       <SidebarContent className="bg-[#fff7f7] px-3 py-5">
         <SidebarMenu className="space-y-2">
           {menuItems.map((item) => {
-            const isActive = pathname === item.url;
+            const Icon = item.icon;
+
+            const isActive =
+              pathname === item.url || pathname.startsWith(`${item.url}/`);
 
             return (
               <SidebarMenuItem key={item.title}>
@@ -92,12 +106,12 @@ export function AppVendorSidebar() {
                   asChild
                   className={`h-12 rounded-2xl px-4 font-bold transition-all ${
                     isActive
-                      ? "bg-gradient-to-r from-[#991b1b] to-[#450a0a] text-white shadow-lg shadow-red-900/20 hover:bg-[#7f1d1d] hover:text-white"
+                      ? "bg-gradient-to-r from-[#991b1b] to-[#450a0a] text-white shadow-lg shadow-red-900/20 hover:text-white"
                       : "text-gray-600 hover:bg-white hover:text-[#7f1d1d] hover:shadow-md"
                   }`}
                 >
                   <Link href={item.url} className="flex items-center gap-3">
-                    <item.icon
+                    <Icon
                       className={`h-5 w-5 ${
                         isActive ? "text-white" : "text-[#7f1d1d]"
                       }`}
@@ -113,11 +127,11 @@ export function AppVendorSidebar() {
 
       <SidebarFooter className="border-t border-[#7f1d1d]/10 bg-[#fff7f7] p-3">
         <div className="mb-3 rounded-2xl border border-[#7f1d1d]/10 bg-white p-4 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-wide text-[#7f1d1d]">
-            Vendor Mode
+          <p className="text-xs font-black uppercase tracking-wide text-[#7f1d1d]">
+            Customer Mode
           </p>
           <p className="mt-1 text-xs leading-5 text-gray-500">
-            Login sebagai vendor untuk mengatur profil dan menu makanan.
+            Login sebagai customer untuk melihat menu, keranjang, dan pesanan.
           </p>
         </div>
 

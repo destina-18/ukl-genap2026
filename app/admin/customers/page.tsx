@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, ShieldCheck, Eye, Users, RefreshCcw } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -17,51 +16,101 @@ import { Badge } from "@/components/ui/badge";
 
 type Customer = {
   id: number;
-  name: string;
-  email: string;
+  name?: string;
+  email?: string;
   phone?: string;
+  whatsappNumber?: string;
   address?: string;
+
   is_verified?: boolean;
+  isVerified?: boolean;
   verified?: boolean;
+  emailVerified?: boolean;
+  isEmailVerified?: boolean;
+  otpVerified?: boolean;
+  verifiedAt?: string;
+  emailVerifiedAt?: string;
+
   created_at?: string;
+  createdAt?: string;
+
+  [key: string]: any;
 };
+
+function getCookie(name: string) {
+  if (typeof document === "undefined") return "";
+
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+
+  if (parts.length === 2) {
+    return parts.pop()?.split(";").shift() || "";
+  }
+
+  return "";
+}
+
+function getArrayFromResponse(response: any) {
+  if (Array.isArray(response)) return response;
+
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.data?.data)) return response.data.data;
+
+  if (Array.isArray(response?.customers)) return response.customers;
+  if (Array.isArray(response?.data?.customers)) return response.data.customers;
+
+  if (Array.isArray(response?.items)) return response.items;
+  if (Array.isArray(response?.data?.items)) return response.data.items;
+
+  if (Array.isArray(response?.result)) return response.result;
+  if (Array.isArray(response?.data?.result)) return response.data.result;
+
+  return [];
+}
+
+function isCustomerVerified(customer: Customer) {
+  return (
+    customer.is_verified === true ||
+    customer.isVerified === true ||
+    customer.verified === true ||
+    customer.emailVerified === true ||
+    customer.isEmailVerified === true ||
+    customer.otpVerified === true ||
+    Boolean(customer.verifiedAt) ||
+    Boolean(customer.emailVerifiedAt)
+  );
+}
+
+function getCustomerPhone(customer: Customer) {
+  return customer.phone || customer.whatsappNumber || "-";
+}
+
+function getCustomerCreatedAt(customer: Customer) {
+  const date = customer.created_at || customer.createdAt;
+
+  if (!date) return "-";
+
+  return new Date(date).toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
+  const [verifyingId, setVerifyingId] = useState<number | null>(null);
 
-  const BASE_API_URL = process.env.NEXT_PUBLIC_BASE_API_URL;
-
-  function getCookie(name: string) {
-    if (typeof document === "undefined") return "";
-
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-
-    if (parts.length === 2) {
-      return parts.pop()?.split(";").shift() || "";
-    }
-
-    return "";
-  }
-
-  function getArrayFromResponse(response: any) {
-    if (Array.isArray(response)) return response;
-    if (Array.isArray(response?.data)) return response.data;
-    if (Array.isArray(response?.data?.data)) return response.data.data;
-    if (Array.isArray(response?.customers)) return response.customers;
-    if (Array.isArray(response?.data?.customers)) return response.data.customers;
-    if (Array.isArray(response?.items)) return response.items;
-
-    return [];
-  }
+  const BASE_API_URL =
+    process.env.NEXT_PUBLIC_BASE_API_URL || "https://kantinklik.up.railway.app";
 
   async function fetchCustomers() {
     try {
       setLoading(true);
 
-      const token = getCookie("accessToken");
+      const token = getCookie("accessToken") || localStorage.getItem("accessToken");
 
       const res = await fetch(`${BASE_API_URL}/api/admin/customers`, {
         method: "GET",
@@ -71,17 +120,18 @@ export default function CustomersPage() {
         cache: "no-store",
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
+      console.log("ADMIN CUSTOMERS RESPONSE:", data);
 
       if (!res.ok) {
-        alert(data.message || "Gagal mengambil data customer");
+        alert(data?.message || "Gagal mengambil data customer");
         setCustomers([]);
         return;
       }
 
       setCustomers(getArrayFromResponse(data));
     } catch (error) {
-      console.error(error);
+      console.error("FETCH CUSTOMERS ERROR:", error);
       alert("Terjadi kesalahan saat mengambil data customer");
       setCustomers([]);
     } finally {
@@ -90,35 +140,39 @@ export default function CustomersPage() {
   }
 
   async function handleVerify(id: number) {
-    const confirmVerify = confirm("Yakin ingin mengubah status verifikasi customer ini?");
+    const confirmVerify = confirm(
+      "Yakin ingin mengubah status verifikasi customer ini?"
+    );
 
     if (!confirmVerify) return;
 
     try {
-      const token = getCookie("accessToken");
+      setVerifyingId(id);
 
-      const res = await fetch(
-        `${BASE_API_URL}/api/admin/customers/${id}/verify`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const token = getCookie("accessToken") || localStorage.getItem("accessToken");
 
-      const data = await res.json();
+      const res = await fetch(`${BASE_API_URL}/api/admin/customers/${id}/verify`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json().catch(() => null);
+      console.log("VERIFY CUSTOMER RESPONSE:", data);
 
       if (!res.ok) {
-        alert(data.message || "Gagal mengubah verifikasi customer");
+        alert(data?.message || "Gagal mengubah verifikasi customer");
         return;
       }
 
       alert("Verifikasi customer berhasil diubah");
       fetchCustomers();
     } catch (error) {
-      console.error(error);
+      console.error("VERIFY CUSTOMER ERROR:", error);
       alert("Terjadi kesalahan saat verifikasi customer");
+    } finally {
+      setVerifyingId(null);
     }
   }
 
@@ -126,19 +180,22 @@ export default function CustomersPage() {
     fetchCustomers();
   }, []);
 
-  const filteredCustomers = customers.filter((customer) => {
+  const filteredCustomers = useMemo(() => {
     const keyword = search.toLowerCase();
 
-    return (
-      customer.name?.toLowerCase().includes(keyword) ||
-      customer.email?.toLowerCase().includes(keyword) ||
-      customer.phone?.toLowerCase().includes(keyword) ||
-      customer.address?.toLowerCase().includes(keyword)
-    );
-  });
+    return customers.filter((customer) => {
+      return (
+        String(customer.name || "").toLowerCase().includes(keyword) ||
+        String(customer.email || "").toLowerCase().includes(keyword) ||
+        String(customer.phone || "").toLowerCase().includes(keyword) ||
+        String(customer.whatsappNumber || "").toLowerCase().includes(keyword) ||
+        String(customer.address || "").toLowerCase().includes(keyword)
+      );
+    });
+  }, [customers, search]);
 
-  const verifiedCount = customers.filter(
-    (customer) => customer.is_verified === true || customer.verified === true
+  const verifiedCount = customers.filter((customer) =>
+    isCustomerVerified(customer)
   ).length;
 
   const unverifiedCount = customers.length - verifiedCount;
@@ -151,7 +208,6 @@ export default function CustomersPage() {
       </div>
 
       <div className="mx-auto max-w-7xl">
-        {/* HEADER */}
         <section className="mb-6 overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#991b1b] via-[#7f1d1d] to-[#450a0a] p-7 text-white shadow-2xl shadow-red-900/20">
           <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div>
@@ -181,7 +237,6 @@ export default function CustomersPage() {
           </div>
         </section>
 
-        {/* STAT CARDS */}
         <section className="mb-6 grid gap-4 md:grid-cols-3">
           <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
             <p className="text-sm font-semibold text-gray-500">Total Customer</p>
@@ -198,14 +253,15 @@ export default function CustomersPage() {
           </div>
 
           <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
-            <p className="text-sm font-semibold text-gray-500">Belum Verifikasi</p>
+            <p className="text-sm font-semibold text-gray-500">
+              Belum Verifikasi
+            </p>
             <h2 className="mt-2 text-4xl font-black text-[#7f1d1d]">
               {loading ? "..." : unverifiedCount}
             </h2>
           </div>
         </section>
 
-        {/* SEARCH */}
         <section className="mb-5 rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-4 shadow-lg shadow-red-900/5">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7f1d1d]" />
@@ -218,10 +274,11 @@ export default function CustomersPage() {
           </div>
         </section>
 
-        {/* TABLE */}
         <section className="overflow-hidden rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white shadow-xl shadow-red-900/5">
           <div className="border-b border-[#7f1d1d]/10 bg-white p-5">
-            <h2 className="text-lg font-black text-gray-950">Daftar Customer</h2>
+            <h2 className="text-lg font-black text-gray-950">
+              Daftar Customer
+            </h2>
             <p className="mt-1 text-sm text-gray-500">
               Total hasil ditampilkan: {filteredCustomers.length}
             </p>
@@ -259,9 +316,7 @@ export default function CustomersPage() {
 
                 <TableBody>
                   {filteredCustomers.map((customer, index) => {
-                    const isVerified =
-                      customer.is_verified === true ||
-                      customer.verified === true;
+                    const verified = isCustomerVerified(customer);
 
                     return (
                       <TableRow
@@ -276,59 +331,63 @@ export default function CustomersPage() {
                           {customer.name || "-"}
                         </TableCell>
 
-                        <TableCell className="font-medium text-gray-600">
+                        <TableCell className="font-medium text-gray-700">
                           {customer.email || "-"}
                         </TableCell>
 
-                        <TableCell className="font-medium text-gray-600">
-                          {customer.phone || "-"}
+                        <TableCell className="font-medium text-gray-700">
+                          {getCustomerPhone(customer)}
                         </TableCell>
 
-                        <TableCell className="max-w-[220px] font-medium text-gray-600">
+                        <TableCell className="font-medium text-gray-700">
                           {customer.address || "-"}
                         </TableCell>
 
                         <TableCell>
-                          <Badge
-                            className={
-                              isVerified
-                                ? "bg-green-100 text-green-700 hover:bg-green-100"
-                                : "bg-red-100 text-[#7f1d1d] hover:bg-red-100"
-                            }
-                          >
-                            {isVerified ? "Terverifikasi" : "Belum Verifikasi"}
-                          </Badge>
+                          {verified ? (
+                            <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                              Terverifikasi
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
+                              Belum Verifikasi
+                            </Badge>
+                          )}
                         </TableCell>
 
-                        <TableCell className="font-medium text-gray-600">
-                          {customer.created_at
-                            ? new Date(customer.created_at).toLocaleDateString(
-                                "id-ID"
-                              )
-                            : "-"}
+                        <TableCell className="font-medium text-gray-700">
+                          {getCustomerCreatedAt(customer)}
                         </TableCell>
 
                         <TableCell>
                           <div className="flex justify-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                (window.location.href = `/admin/customers/${customer.id}`)
-                              }
-                              className="rounded-xl border-[#7f1d1d]/20 text-[#7f1d1d] hover:bg-[#fff7f7] hover:text-[#450a0a]"
+                            <button
+                              type="button"
+                              onClick={() => {
+                                alert(
+                                  `Nama: ${customer.name || "-"}\nEmail: ${
+                                    customer.email || "-"
+                                  }\nNo HP: ${getCustomerPhone(customer)}`
+                                );
+                              }}
+                              className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#7f1d1d]/20 text-[#7f1d1d] transition hover:bg-[#fff7f7]"
                             >
                               <Eye className="h-4 w-4" />
-                            </Button>
+                            </button>
 
-                            <Button
-                              size="sm"
-                              onClick={() => handleVerify(customer.id)}
-                              className="rounded-xl bg-gradient-to-r from-[#991b1b] to-[#450a0a] font-bold text-white shadow-md shadow-red-900/10 hover:opacity-90"
-                            >
-                              <ShieldCheck className="mr-2 h-4 w-4" />
-                              Verify
-                            </Button>
+                            {!verified && (
+                              <button
+                                type="button"
+                                onClick={() => handleVerify(customer.id)}
+                                disabled={verifyingId === customer.id}
+                                className="flex items-center gap-2 rounded-xl bg-[#7f1d1d] px-4 py-2 text-sm font-black text-white transition hover:bg-[#991b1b] disabled:cursor-not-allowed disabled:opacity-70"
+                              >
+                                <ShieldCheck className="h-4 w-4" />
+                                {verifyingId === customer.id
+                                  ? "..."
+                                  : "Verify"}
+                              </button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>

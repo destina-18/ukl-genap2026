@@ -23,50 +23,63 @@ export default function SignInPage() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
 
+  const BASE_API_URL =
+    process.env.NEXT_PUBLIC_BASE_API_URL || "https://kantinklik.up.railway.app";
+
   async function handleSignIn(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    if (!email.trim() || !password.trim()) {
+      alert("Email dan password wajib diisi");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/auth/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: email.trim(),
-            password,
-          }),
-        }
-      );
+      const response = await fetch(`${BASE_API_URL}/api/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password.trim(),
+        }),
+      });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
       console.log("LOGIN RESPONSE:", data);
 
       if (!response.ok) {
-        alert(data.message || "Email atau password salah");
+        alert(data?.message || "Email atau password salah");
         return;
       }
 
       const token =
-        data.token ||
-        data.accessToken ||
-        data.access_token ||
-        data.jwt ||
-        data.data?.token ||
-        data.data?.accessToken ||
-        data.data?.access_token ||
-        data.data?.jwt;
+        data?.token ||
+        data?.accessToken ||
+        data?.access_token ||
+        data?.jwt ||
+        data?.data?.token ||
+        data?.data?.accessToken ||
+        data?.data?.access_token ||
+        data?.data?.jwt;
+
+      const user =
+        data?.user ||
+        data?.data?.user ||
+        data?.account ||
+        data?.data?.account ||
+        null;
 
       const role =
-        data.role ||
-        data.data?.role ||
-        data.user?.role ||
-        data.data?.user?.role ||
-        data.account?.role ||
-        data.data?.account?.role;
+        data?.role ||
+        data?.data?.role ||
+        data?.user?.role ||
+        data?.data?.user?.role ||
+        data?.account?.role ||
+        data?.data?.account?.role;
 
       if (!token) {
         alert("Token tidak ditemukan dari backend. Cek Console LOGIN RESPONSE.");
@@ -94,20 +107,27 @@ export default function SignInPage() {
         return;
       }
 
-      document.cookie = "accesstoken=; path=/; max-age=0";
       document.cookie = "accessToken=; path=/; max-age=0";
+      document.cookie = "accesstoken=; path=/; max-age=0";
       document.cookie = "role=; path=/; max-age=0";
 
       document.cookie = `accessToken=${token}; path=/`;
       document.cookie = `accesstoken=${token}; path=/`;
       document.cookie = `role=${finalRole}; path=/`;
 
+      localStorage.setItem("accessToken", token);
+      localStorage.setItem("role", finalRole);
+
+      if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+      }
+
       if (finalRole === "ADMIN") {
         window.location.href = "/admin/dashboard";
       } else if (finalRole === "VENDOR") {
         window.location.href = "/vendor/dashboard";
       } else if (finalRole === "CUSTOMER") {
-        window.location.href = "/customer/dashboard";
+        window.location.href = "/customers/dashboard";
       } else {
         alert(`Role tidak dikenali: ${finalRole}`);
       }
@@ -121,7 +141,6 @@ export default function SignInPage() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#fff7f7] px-6 py-8 text-gray-900">
-      {/* BACKGROUND */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-[-120px] top-[-120px] h-[420px] w-[420px] rounded-full bg-[#7f1d1d]/20 blur-3xl" />
         <div className="absolute right-[-140px] top-[80px] h-[480px] w-[480px] rounded-full bg-[#991b1b]/20 blur-3xl" />
@@ -130,7 +149,6 @@ export default function SignInPage() {
 
       <div className="relative mx-auto flex min-h-[calc(100vh-64px)] w-full max-w-6xl items-center justify-center">
         <div className="grid w-full overflow-hidden rounded-[2.5rem] border border-[#7f1d1d]/10 bg-white shadow-2xl shadow-red-900/10 lg:grid-cols-2">
-          {/* LEFT */}
           <section className="relative hidden overflow-hidden bg-gradient-to-br from-[#991b1b] via-[#7f1d1d] to-[#450a0a] p-10 text-white lg:flex lg:flex-col lg:justify-between">
             <div className="absolute right-[-80px] top-[-80px] h-72 w-72 rounded-full bg-white/10 blur-2xl" />
             <div className="absolute bottom-[-120px] left-[-120px] h-80 w-80 rounded-full bg-black/20 blur-3xl" />
@@ -199,7 +217,6 @@ export default function SignInPage() {
             </div>
           </section>
 
-          {/* RIGHT */}
           <section className="p-6 sm:p-10">
             <Link
               href="/"
@@ -260,21 +277,20 @@ export default function SignInPage() {
                   Email
                 </label>
 
-                <div className="flex items-center rounded-2xl border border-gray-200 bg-gray-50 px-4 transition focus-within:border-[#7f1d1d] focus-within:bg-white focus-within:shadow-lg focus-within:shadow-red-900/5">
-                  <Mail className="mr-3 h-5 w-5 text-gray-400" />
+                <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-4 transition focus-within:border-[#7f1d1d] focus-within:ring-4 focus-within:ring-[#7f1d1d]/10">
+                  <Mail className="h-5 w-5 text-gray-400" />
 
                   <input
-                    type="email"
                     id="email"
+                    type="email"
                     placeholder={
                       loginMode === "ADMIN"
-                        ? "admin@kantinklik.com"
+                        ? "email admin"
                         : "email customer atau vendor"
                     }
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-transparent py-4 text-gray-800 outline-none placeholder:text-gray-400"
-                    required
+                    className="w-full bg-transparent text-sm font-semibold outline-none placeholder:text-gray-400"
                   />
                 </div>
               </div>
@@ -287,17 +303,16 @@ export default function SignInPage() {
                   Password
                 </label>
 
-                <div className="flex items-center rounded-2xl border border-gray-200 bg-gray-50 px-4 transition focus-within:border-[#7f1d1d] focus-within:bg-white focus-within:shadow-lg focus-within:shadow-red-900/5">
-                  <Lock className="mr-3 h-5 w-5 text-gray-400" />
+                <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-4 transition focus-within:border-[#7f1d1d] focus-within:ring-4 focus-within:ring-[#7f1d1d]/10">
+                  <Lock className="h-5 w-5 text-gray-400" />
 
                   <input
-                    type={showPassword ? "text" : "password"}
                     id="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="Masukkan password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-transparent py-4 text-gray-800 outline-none placeholder:text-gray-400"
-                    required
+                    className="w-full bg-transparent text-sm font-semibold outline-none placeholder:text-gray-400"
                   />
 
                   <button
@@ -317,7 +332,7 @@ export default function SignInPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#991b1b] via-[#7f1d1d] to-[#450a0a] px-6 py-4 font-black text-white shadow-xl shadow-red-900/20 transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-2xl bg-gradient-to-r from-[#991b1b] to-[#450a0a] px-5 py-4 text-sm font-black text-white shadow-lg shadow-red-900/20 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {loading
                   ? "Memproses..."
@@ -327,33 +342,23 @@ export default function SignInPage() {
               </button>
             </form>
 
-            <div className="mt-6 rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] p-4 text-sm leading-6 text-gray-600">
-              {loginMode === "ADMIN" ? (
-                <p>
-                  Mode ini khusus untuk akun <b className="text-[#7f1d1d]">ADMIN</b>.
-                  Kalau login menggunakan akun vendor atau customer, akses akan
-                  ditolak.
-                </p>
-              ) : (
-                <p>
-                  Mode ini untuk akun{" "}
-                  <b className="text-[#7f1d1d]">CUSTOMER</b> dan{" "}
-                  <b className="text-[#7f1d1d]">VENDOR</b>. Setelah login, kamu
-                  akan diarahkan otomatis sesuai role akun.
-                </p>
-              )}
-            </div>
-
             {loginMode === "USER" && (
-              <p className="mt-6 text-center text-sm text-gray-500">
+              <p className="mt-8 text-center text-sm text-gray-500">
                 Belum punya akun customer?{" "}
                 <Link
                   href="/sign-up"
-                  className="font-black text-[#7f1d1d] transition hover:text-[#450a0a]"
+                  className="font-black text-[#7f1d1d] hover:underline"
                 >
                   Daftar di sini
                 </Link>
               </p>
+            )}
+
+            {loginMode === "ADMIN" && (
+              <div className="mt-8 rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] p-5 text-sm leading-6 text-gray-600">
+                Mode ini khusus akun <b>ADMIN</b>. Akun customer dan vendor
+                tidak bisa masuk lewat mode ini.
+              </div>
             )}
           </section>
         </div>
