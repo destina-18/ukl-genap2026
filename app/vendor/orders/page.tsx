@@ -4,328 +4,23 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
-  CheckCircle2,
-  Clock,
-  ClipboardList,
   RefreshCcw,
-  ShoppingBag,
   Utensils,
-  Wallet,
-  XCircle,
 } from "lucide-react";
 
-type OrderItem = {
-  id?: number | string;
-  quantity?: number | string;
-  qty?: number | string;
+import OrderCard from "./order-card";
+import OrderEmpty from "./order-empty";
+import OrderLoading from "./order-loading";
+import OrderStats from "./order-stats";
 
-  price?: number | string;
-  menuPrice?: number | string;
-  menu_price?: number | string;
-  unitPrice?: number | string;
-  unit_price?: number | string;
-
-  subtotal?: number | string;
-  subTotal?: number | string;
-  sub_total?: number | string;
-  total?: number | string;
-  totalPrice?: number | string;
-  total_price?: number | string;
-
-  menu?: {
-    id?: number | string;
-    name?: string;
-    price?: number | string;
-    imageUrl?: string;
-    image?: string;
-  };
-
-  menuName?: string;
-  menu_name?: string;
-  name?: string;
-
-  [key: string]: any;
-};
-
-type Order = {
-  id?: number | string;
-  orderId?: number | string;
-
-  status?: string;
-  paymentMethod?: string;
-  payment_method?: string;
-
-  totalPrice?: number | string;
-  total_price?: number | string;
-  totalAmount?: number | string;
-  total_amount?: number | string;
-  grandTotal?: number | string;
-  grand_total?: number | string;
-  total?: number | string;
-
-  createdAt?: string;
-  created_at?: string;
-
-  customer?: {
-    id?: number | string;
-    name?: string;
-    email?: string;
-    whatsappNumber?: string;
-    whatsapp_number?: string;
-  };
-
-  customerName?: string;
-  customer_name?: string;
-
-  items?: OrderItem[];
-  orderItems?: OrderItem[];
-  order_items?: OrderItem[];
-  details?: OrderItem[];
-  orderDetails?: OrderItem[];
-  order_details?: OrderItem[];
-
-  [key: string]: any;
-};
-
-function getCookie(name: string) {
-  if (typeof document === "undefined") return "";
-
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-
-  if (parts.length === 2) {
-    return parts.pop()?.split(";").shift() || "";
-  }
-
-  return "";
-}
-
-function getToken() {
-  if (typeof window === "undefined") return "";
-
-  return (
-    getCookie("accessToken") ||
-    getCookie("token") ||
-    getCookie("accesstoken") ||
-    localStorage.getItem("accessToken") ||
-    localStorage.getItem("token") ||
-    ""
-  );
-}
-
-function getArrayFromResponse(response: any): Order[] {
-  if (Array.isArray(response)) return response;
-
-  if (Array.isArray(response?.data)) return response.data;
-  if (Array.isArray(response?.data?.data)) return response.data.data;
-
-  if (Array.isArray(response?.orders)) return response.orders;
-  if (Array.isArray(response?.data?.orders)) return response.data.orders;
-
-  if (Array.isArray(response?.items)) return response.items;
-  if (Array.isArray(response?.data?.items)) return response.data.items;
-
-  if (Array.isArray(response?.result)) return response.result;
-  if (Array.isArray(response?.data?.result)) return response.data.result;
-
-  return [];
-}
-
-function getRawNumber(value: any) {
-  const numberValue = Number(value || 0);
-  return Number.isNaN(numberValue) ? 0 : numberValue;
-}
-
-function getOrderId(order: Order) {
-  return order.id || order.orderId;
-}
-
-function getOrderStatus(order: Order) {
-  return String(order.status || "PENDING").toUpperCase();
-}
-
-function getOrderItems(order: Order) {
-  return (
-    order.items ||
-    order.orderItems ||
-    order.order_items ||
-    order.details ||
-    order.orderDetails ||
-    order.order_details ||
-    []
-  );
-}
-
-function getItemQuantity(item: OrderItem) {
-  return getRawNumber(item.quantity || item.qty || 1);
-}
-
-function getItemSubtotal(item: OrderItem) {
-  const quantity = getItemQuantity(item);
-
-  const subtotal = getRawNumber(
-    item.subtotal ||
-      item.subTotal ||
-      item.sub_total ||
-      item.totalPrice ||
-      item.total_price ||
-      item.total
-  );
-
-  const price = getRawNumber(
-    item.price ||
-      item.menuPrice ||
-      item.menu_price ||
-      item.unitPrice ||
-      item.unit_price ||
-      item.menu?.price
-  );
-
-  if (subtotal > 0) return subtotal;
-  if (price > 0) return price * quantity;
-
-  return 0;
-}
-
-function getItemPrice(item: OrderItem) {
-  const quantity = getItemQuantity(item);
-
-  const price = getRawNumber(
-    item.price ||
-      item.menuPrice ||
-      item.menu_price ||
-      item.unitPrice ||
-      item.unit_price ||
-      item.menu?.price
-  );
-
-  if (price > 0) return price;
-
-  const subtotal = getItemSubtotal(item);
-
-  if (subtotal > 0 && quantity > 0) {
-    return subtotal / quantity;
-  }
-
-  return 0;
-}
-
-function getOrderTotal(order: Order) {
-  const items = getOrderItems(order);
-
-  const totalFromItems = items.reduce((sum: number, item: OrderItem) => {
-    return sum + getItemSubtotal(item);
-  }, 0);
-
-  const totalFromOrder = getRawNumber(
-    order.totalPrice ||
-      order.total_price ||
-      order.totalAmount ||
-      order.total_amount ||
-      order.grandTotal ||
-      order.grand_total ||
-      order.total
-  );
-
-  if (totalFromOrder > 0) return totalFromOrder;
-  if (totalFromItems > 0) return totalFromItems;
-
-  return 0;
-}
-
-function getCustomerName(order: Order) {
-  return (
-    order.customer?.name ||
-    order.customerName ||
-    order.customer_name ||
-    "Customer"
-  );
-}
-
-function getCustomerWhatsapp(order: Order) {
-  return order.customer?.whatsappNumber || order.customer?.whatsapp_number || "";
-}
-
-function formatRupiah(value: number | string | undefined | null) {
-  const numberValue = Number(value || 0);
-
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(numberValue);
-}
-
-function formatDate(dateString?: string) {
-  if (!dateString) return "-";
-
-  const date = new Date(dateString);
-
-  if (Number.isNaN(date.getTime())) return "-";
-
-  return new Intl.DateTimeFormat("id-ID", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
-
-function getStatusStyle(status?: string) {
-  const finalStatus = String(status || "").toUpperCase();
-
-  if (finalStatus === "PENDING") {
-    return {
-      label: "Pending",
-      className: "bg-yellow-100 text-yellow-700",
-      icon: Clock,
-    };
-  }
-
-  if (finalStatus === "ACCEPTED") {
-    return {
-      label: "Diterima",
-      className: "bg-blue-100 text-blue-700",
-      icon: CheckCircle2,
-    };
-  }
-
-  if (finalStatus === "READY") {
-    return {
-      label: "Siap Diambil",
-      className: "bg-purple-100 text-purple-700",
-      icon: ShoppingBag,
-    };
-  }
-
-  if (finalStatus === "COMPLETED") {
-    return {
-      label: "Selesai",
-      className: "bg-green-100 text-green-700",
-      icon: CheckCircle2,
-    };
-  }
-
-  if (finalStatus === "REJECTED") {
-    return {
-      label: "Ditolak",
-      className: "bg-red-100 text-red-700",
-      icon: XCircle,
-    };
-  }
-
-  if (finalStatus === "CANCELLED" || finalStatus === "CANCELED") {
-    return {
-      label: "Dibatalkan",
-      className: "bg-red-100 text-red-700",
-      icon: XCircle,
-    };
-  }
-
-  return {
-    label: finalStatus || "Status",
-    className: "bg-gray-100 text-gray-700",
-    icon: ClipboardList,
-  };
-}
+import {
+  formatRupiah,
+  getArrayFromResponse,
+  getOrderStatus,
+  getOrderTotal,
+  getToken,
+  type Order,
+} from "./order-helpers";
 
 export default function VendorOrdersPage() {
   const BASE_API_URL =
@@ -522,49 +217,13 @@ export default function VendorOrdersPage() {
           </div>
         </section>
 
-        <section className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-4">
-          <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
-              <ClipboardList className="h-6 w-6" />
-            </div>
-            <p className="text-sm font-semibold text-gray-500">Total Order</p>
-            <h2 className="mt-2 text-4xl font-black text-[#7f1d1d]">
-              {loading ? "..." : totalOrders}
-            </h2>
-          </div>
-
-          <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-700">
-              <Clock className="h-6 w-6" />
-            </div>
-            <p className="text-sm font-semibold text-gray-500">Pending</p>
-            <h2 className="mt-2 text-4xl font-black text-yellow-700">
-              {loading ? "..." : pendingOrders}
-            </h2>
-          </div>
-
-          <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
-              <ShoppingBag className="h-6 w-6" />
-            </div>
-            <p className="text-sm font-semibold text-gray-500">
-              Diproses / Ready
-            </p>
-            <h2 className="mt-2 text-4xl font-black text-blue-700">
-              {loading ? "..." : processingOrders}
-            </h2>
-          </div>
-
-          <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-green-100 text-green-700">
-              <CheckCircle2 className="h-6 w-6" />
-            </div>
-            <p className="text-sm font-semibold text-gray-500">Selesai</p>
-            <h2 className="mt-2 text-4xl font-black text-green-700">
-              {loading ? "..." : completedOrders}
-            </h2>
-          </div>
-        </section>
+        <OrderStats
+          loading={loading}
+          totalOrders={totalOrders}
+          pendingOrders={pendingOrders}
+          processingOrders={processingOrders}
+          completedOrders={completedOrders}
+        />
 
         <section className="mb-8 rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-6 shadow-lg shadow-red-900/5">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -572,6 +231,7 @@ export default function VendorOrdersPage() {
               <p className="text-sm font-semibold text-gray-500">
                 Pendapatan dari order selesai
               </p>
+
               <h2 className="mt-2 text-3xl font-black text-[#7f1d1d]">
                 {loading ? "..." : formatRupiah(totalIncome)}
               </h2>
@@ -588,219 +248,19 @@ export default function VendorOrdersPage() {
         </section>
 
         {loading ? (
-          <section className="flex min-h-[300px] items-center justify-center rounded-[1.5rem] bg-white shadow-lg shadow-red-900/5">
-            <div className="text-center">
-              <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-[#7f1d1d]/20 border-t-[#7f1d1d]" />
-              <p className="text-sm font-bold text-[#7f1d1d]">
-                Memuat order...
-              </p>
-            </div>
-          </section>
+          <OrderLoading />
         ) : orders.length === 0 ? (
-          <section className="rounded-[1.5rem] border border-dashed border-[#7f1d1d]/20 bg-white p-10 text-center shadow-lg shadow-red-900/5">
-            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
-              <ClipboardList className="h-10 w-10" />
-            </div>
-
-            <h2 className="text-2xl font-black text-gray-950">
-              Belum ada order
-            </h2>
-
-            <p className="mt-3 text-sm leading-6 text-gray-500">
-              Pesanan customer yang masuk ke kantinmu akan muncul di sini.
-            </p>
-          </section>
+          <OrderEmpty />
         ) : (
           <section className="space-y-5">
-            {orders.map((order) => {
-              const orderId = getOrderId(order);
-              const status = getOrderStatus(order);
-              const statusInfo = getStatusStyle(status);
-              const StatusIcon = statusInfo.icon;
-              const items = getOrderItems(order);
-
-              const canAcceptReject = status === "PENDING";
-              const canReady = status === "ACCEPTED";
-              const canComplete = status === "READY";
-
-              return (
-                <article
-                  key={String(orderId)}
-                  className="overflow-hidden rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white shadow-lg shadow-red-900/5"
-                >
-                  <div className="border-b border-[#7f1d1d]/10 bg-[#fff7f7] p-5">
-                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                      <div>
-                        <div className="mb-2 flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-[#7f1d1d]/10 px-3 py-1 text-xs font-black text-[#7f1d1d]">
-                            Order #{orderId}
-                          </span>
-
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-black ${statusInfo.className}`}
-                          >
-                            <StatusIcon className="h-3 w-3" />
-                            {statusInfo.label}
-                          </span>
-                        </div>
-
-                        <h2 className="text-xl font-black text-gray-950">
-                          {getCustomerName(order)}
-                        </h2>
-
-                        <p className="mt-1 text-sm text-gray-500">
-                          Dibuat:{" "}
-                          {formatDate(order.createdAt || order.created_at)}
-                        </p>
-
-                        {order.customer?.email && (
-                          <p className="mt-1 text-sm text-gray-500">
-                            {order.customer.email}
-                          </p>
-                        )}
-
-                        {getCustomerWhatsapp(order) && (
-                          <p className="mt-1 text-sm text-gray-500">
-                            WA: {getCustomerWhatsapp(order)}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="text-left md:text-right">
-                        <p className="text-sm font-bold text-gray-500">
-                          Total Pembayaran
-                        </p>
-
-                        <p className="text-2xl font-black text-[#7f1d1d]">
-                          {formatRupiah(getOrderTotal(order))}
-                        </p>
-
-                        <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-black text-gray-600">
-                          <Wallet className="h-3 w-3" />
-                          {order.paymentMethod || order.payment_method || "-"}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-5">
-                    <div className="mb-4 flex items-center gap-2 text-sm font-black text-gray-800">
-                      <ShoppingBag className="h-4 w-4 text-[#7f1d1d]" />
-                      Detail Item
-                    </div>
-
-                    {items.length === 0 ? (
-                      <div className="rounded-2xl bg-[#fff7f7] p-4 text-sm text-gray-500">
-                        Detail item tidak tersedia.
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {items.map((item, index) => {
-                          const menuName =
-                            item.menu?.name ||
-                            item.menuName ||
-                            item.menu_name ||
-                            item.name ||
-                            `Menu ${index + 1}`;
-
-                          const quantity = getItemQuantity(item);
-                          const price = getItemPrice(item);
-                          const subtotal = getItemSubtotal(item);
-
-                          return (
-                            <div
-                              key={String(item.id || index)}
-                              className="flex items-center justify-between gap-4 rounded-2xl border border-[#7f1d1d]/10 p-4"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
-                                  <Utensils className="h-5 w-5" />
-                                </div>
-
-                                <div>
-                                  <p className="font-black text-gray-950">
-                                    {menuName}
-                                  </p>
-                                  <p className="text-sm text-gray-500">
-                                    {quantity} x {formatRupiah(price)}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <p className="text-sm font-black text-[#7f1d1d]">
-                                {formatRupiah(subtotal)}
-                              </p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    <div className="mt-5 flex flex-col gap-3 md:flex-row md:justify-end">
-                      {canAcceptReject && (
-                        <>
-                          <button
-                            onClick={() =>
-                              updateOrderStatus(String(orderId), "reject")
-                            }
-                            disabled={actionLoading === `${orderId}-reject`}
-                            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-50 px-5 py-3 text-sm font-black text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-70"
-                          >
-                            <XCircle className="h-4 w-4" />
-                            {actionLoading === `${orderId}-reject`
-                              ? "Menolak..."
-                              : "Tolak"}
-                          </button>
-
-                          <button
-                            onClick={() =>
-                              updateOrderStatus(String(orderId), "accept")
-                            }
-                            disabled={actionLoading === `${orderId}-accept`}
-                            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-50 px-5 py-3 text-sm font-black text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-70"
-                          >
-                            <CheckCircle2 className="h-4 w-4" />
-                            {actionLoading === `${orderId}-accept`
-                              ? "Menerima..."
-                              : "Terima"}
-                          </button>
-                        </>
-                      )}
-
-                      {canReady && (
-                        <button
-                          onClick={() =>
-                            updateOrderStatus(String(orderId), "ready")
-                          }
-                          disabled={actionLoading === `${orderId}-ready`}
-                          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-purple-50 px-5 py-3 text-sm font-black text-purple-700 transition hover:bg-purple-100 disabled:cursor-not-allowed disabled:opacity-70"
-                        >
-                          <ShoppingBag className="h-4 w-4" />
-                          {actionLoading === `${orderId}-ready`
-                            ? "Memproses..."
-                            : "Siap Diambil"}
-                        </button>
-                      )}
-
-                      {canComplete && (
-                        <button
-                          onClick={() =>
-                            updateOrderStatus(String(orderId), "complete")
-                          }
-                          disabled={actionLoading === `${orderId}-complete`}
-                          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-green-50 px-5 py-3 text-sm font-black text-green-700 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-70"
-                        >
-                          <CheckCircle2 className="h-4 w-4" />
-                          {actionLoading === `${orderId}-complete`
-                            ? "Menyelesaikan..."
-                            : "Selesaikan"}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
+            {orders.map((order, index) => (
+              <OrderCard
+                key={String(order.id || order.orderId || index)}
+                order={order}
+                actionLoading={actionLoading}
+                updateOrderStatus={updateOrderStatus}
+              />
+            ))}
           </section>
         )}
       </div>

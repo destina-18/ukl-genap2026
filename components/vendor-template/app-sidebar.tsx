@@ -8,6 +8,7 @@ import {
   LogOut,
   Utensils,
   Sparkles,
+  Star,
 } from "lucide-react";
 
 import {
@@ -41,6 +42,11 @@ const menuItems = [
     url: "/vendor/orders",
     icon: Utensils,
   },
+  {
+  title: "Rating",
+  url: "/vendor/ratings",
+  icon: Star,
+},
 ];
 
 export function AppVendorSidebar() {

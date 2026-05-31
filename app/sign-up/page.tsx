@@ -113,12 +113,19 @@ export default function SignUpPage() {
         return;
       }
 
-      const token = data?.data?.accessToken || data?.accessToken;
-      const user = data?.data?.user || data?.user;
-      const role = user?.role || "CUSTOMER";
+      const token =
+        data?.token ||
+        data?.accessToken ||
+        data?.access_token ||
+        data?.data?.token ||
+        data?.data?.accessToken ||
+        data?.data?.access_token;
+
+      const user = data?.user || data?.data?.user || null;
+      const role = String(user?.role || data?.role || data?.data?.role || "CUSTOMER").toUpperCase();
 
       if (!token) {
-        alert("Verifikasi berhasil, tapi token tidak ditemukan");
+        alert("Verifikasi berhasil. Silakan login.");
         router.push("/sign-in");
         return;
       }
@@ -263,6 +270,7 @@ export default function SignUpPage() {
 
                     <div className="flex items-center gap-3 rounded-2xl border border-gray-200 px-4 py-4 focus-within:border-[#7f1d1d]">
                       <User className="h-5 w-5 text-gray-400" />
+
                       <input
                         value={name}
                         onChange={(e) => setName(e.target.value)}
@@ -280,6 +288,7 @@ export default function SignUpPage() {
 
                     <div className="flex items-center gap-3 rounded-2xl border border-gray-200 px-4 py-4 focus-within:border-[#7f1d1d]">
                       <Mail className="h-5 w-5 text-gray-400" />
+
                       <input
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -297,6 +306,7 @@ export default function SignUpPage() {
 
                     <div className="flex items-center gap-3 rounded-2xl border border-gray-200 px-4 py-4 focus-within:border-[#7f1d1d]">
                       <Phone className="h-5 w-5 text-gray-400" />
+
                       <input
                         value={whatsappNumber}
                         onChange={(e) =>

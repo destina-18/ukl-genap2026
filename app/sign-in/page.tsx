@@ -329,6 +329,17 @@ export default function SignInPage() {
                 </div>
               </div>
 
+              {loginMode === "USER" && (
+                <div className="flex justify-end">
+                  <Link
+                    href="/forgot-password"
+                    className="text-sm font-black text-[#7f1d1d] hover:underline"
+                  >
+                    Lupa password?
+                  </Link>
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={loading}

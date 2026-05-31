@@ -2,57 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import {
-  ArrowLeft,
-  RefreshCcw,
-  Search,
-  Store,
-  Utensils,
-  ShoppingCart,
-  Star,
-} from "lucide-react";
+import { ArrowLeft, RefreshCcw } from "lucide-react";
 
-type Vendor = {
-  id?: number | string;
-  vendorId?: number | string;
-  _id?: number | string;
-  canteenNumber?: number | string;
-  canteenName?: string;
-  name?: string;
-  vendorName?: string;
-  email?: string;
-  logoUrl?: string;
-  logo?: string;
-  image?: string;
-  description?: string;
-  address?: string;
-  isActive?: boolean;
-  _count?: {
-    menus?: number;
-  };
-  [key: string]: any;
-};
+import VendorList, {
+  type Vendor,
+  getVendorId,
+} from "./vendor-list";
 
-type Menu = {
-  id?: number | string;
-  menuId?: number | string;
-  _id?: number | string;
-  name?: string;
-  menuName?: string;
-  description?: string;
-  price?: number | string;
-  image?: string;
-  imageUrl?: string;
-  stock?: number;
-  isAvailable?: boolean;
-  category?: {
-    name?: string;
-  };
-  vendor?: {
-    name?: string;
-  };
-  [key: string]: any;
-};
+import MenuList from "./menu-list";
+import { type Menu, getMenuId } from "./menu-card";
 
 function getCookie(name: string) {
   if (typeof document === "undefined") return "";
@@ -86,41 +44,6 @@ function getArrayFromResponse(response: any) {
   if (Array.isArray(response?.data?.result)) return response.data.result;
 
   return [];
-}
-
-function getVendorId(vendor: Vendor) {
-  return vendor.id || vendor.vendorId || vendor._id;
-}
-
-function getVendorName(vendor: Vendor) {
-  return vendor.canteenName || vendor.name || vendor.vendorName || "Vendor";
-}
-
-function getVendorDescription(vendor: Vendor) {
-  return (
-    vendor.description ||
-    vendor.address ||
-    vendor.email ||
-    `Kantin nomor ${vendor.canteenNumber || "-"}`
-  );
-}
-
-function getVendorLogo(vendor: Vendor) {
-  return vendor.logoUrl || vendor.logo || vendor.image || "";
-}
-
-function getMenuId(menu: Menu) {
-  return menu.id || menu.menuId || menu._id;
-}
-
-function formatRupiah(value: number | string | undefined) {
-  const numberValue = Number(value || 0);
-
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(numberValue);
 }
 
 export default function CustomersMenuPage() {
@@ -305,6 +228,7 @@ export default function CustomersMenuPage() {
             </div>
 
             <button
+              type="button"
               onClick={getVendors}
               disabled={loadingVendors || loadingMenus}
               className="flex w-fit items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-[#7f1d1d] shadow-lg transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-70"
@@ -320,231 +244,21 @@ export default function CustomersMenuPage() {
         </section>
 
         <section className="mb-8 grid grid-cols-1 gap-5 lg:grid-cols-[340px_1fr]">
-          <aside className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
-            <div className="mb-5 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
-                <Store className="h-6 w-6" />
-              </div>
+          <VendorList
+            vendors={vendors}
+            selectedVendorId={selectedVendorId}
+            loadingVendors={loadingVendors}
+            onSelectVendor={handleSelectVendor}
+          />
 
-              <div>
-                <h2 className="text-lg font-black text-gray-950">
-                  Pilih Vendor
-                </h2>
-                <p className="text-sm text-gray-500">
-                  Total vendor: {vendors.length}
-                </p>
-              </div>
-            </div>
-
-            {loadingVendors ? (
-              <div className="rounded-2xl bg-[#fff7f7] p-4 text-sm font-bold text-[#7f1d1d]">
-                Memuat vendor...
-              </div>
-            ) : vendors.length === 0 ? (
-              <div className="rounded-2xl bg-[#fff7f7] p-4 text-sm text-gray-500">
-                Belum ada vendor aktif.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {vendors.map((vendor) => {
-                  const vendorId = getVendorId(vendor);
-                  const vendorLogo = getVendorLogo(vendor);
-                  const isActive = String(vendorId) === String(selectedVendorId);
-
-                  return (
-                    <button
-                      key={String(vendorId)}
-                      onClick={() => handleSelectVendor(String(vendorId))}
-                      className={`w-full rounded-2xl border p-4 text-left transition ${
-                        isActive
-                          ? "border-[#7f1d1d] bg-[#7f1d1d] text-white shadow-lg shadow-red-900/20"
-                          : "border-[#7f1d1d]/10 bg-white text-gray-700 hover:bg-[#fff7f7]"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl ${
-                            isActive
-                              ? "bg-white/15 text-white"
-                              : "bg-[#7f1d1d]/10 text-[#7f1d1d]"
-                          }`}
-                        >
-                          {vendorLogo ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={vendorLogo}
-                              alt={getVendorName(vendor)}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <Store className="h-5 w-5" />
-                          )}
-                        </div>
-
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-black">
-                            {getVendorName(vendor)}
-                          </p>
-
-                          <p
-                            className={`mt-1 truncate text-xs ${
-                              isActive ? "text-red-100" : "text-gray-500"
-                            }`}
-                          >
-                            {getVendorDescription(vendor)}
-                          </p>
-
-                          <p
-                            className={`mt-1 text-xs font-bold ${
-                              isActive ? "text-red-100" : "text-[#7f1d1d]"
-                            }`}
-                          >
-                            {vendor._count?.menus || 0} menu
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </aside>
-
-          <section className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
-            <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-[#7f1d1d]/10 px-4 py-2 text-xs font-black text-[#7f1d1d]">
-                  <Utensils className="h-4 w-4" />
-                  {selectedVendor
-                    ? getVendorName(selectedVendor)
-                    : "Pilih vendor"}
-                </div>
-
-                <h2 className="text-2xl font-black text-gray-950">
-                  Daftar Menu
-                </h2>
-
-                <p className="mt-1 text-sm text-gray-500">
-                  Total menu ditampilkan: {filteredMenus.length}
-                </p>
-              </div>
-
-              <div className="flex w-full items-center gap-3 rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] px-4 py-3 md:max-w-sm">
-                <Search className="h-5 w-5 text-[#7f1d1d]" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Cari menu..."
-                  className="w-full bg-transparent text-sm font-semibold outline-none placeholder:text-gray-400"
-                />
-              </div>
-            </div>
-
-            {loadingMenus ? (
-              <div className="flex min-h-[300px] items-center justify-center">
-                <div className="rounded-3xl bg-[#fff7f7] px-8 py-6 text-center">
-                  <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-[#7f1d1d]/20 border-t-[#7f1d1d]" />
-                  <p className="text-sm font-bold text-[#7f1d1d]">
-                    Memuat menu...
-                  </p>
-                </div>
-              </div>
-            ) : filteredMenus.length === 0 ? (
-              <div className="flex min-h-[300px] items-center justify-center rounded-3xl border border-dashed border-[#7f1d1d]/20 bg-[#fff7f7]">
-                <div className="text-center">
-                  <Utensils className="mx-auto mb-4 h-12 w-12 text-[#7f1d1d]" />
-                  <h3 className="text-lg font-black text-gray-950">
-                    Menu belum tersedia
-                  </h3>
-                  <p className="mt-2 text-sm text-gray-500">
-                    Pilih vendor lain atau coba refresh data.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {filteredMenus.map((menu) => {
-                  const menuId = getMenuId(menu);
-                  const menuName = menu.name || menu.menuName || "Menu";
-                  const menuImage = menu.imageUrl || menu.image;
-                  const available = menu.isAvailable !== false;
-
-                  return (
-                    <article
-                      key={String(menuId)}
-                      className="overflow-hidden rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white shadow-md shadow-red-900/5"
-                    >
-                      <div className="relative h-44 bg-[#fff7f7]">
-                        {menuImage ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={menuImage}
-                            alt={menuName}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-[#7f1d1d]">
-                            <Utensils className="h-14 w-14" />
-                          </div>
-                        )}
-
-                        <div className="absolute left-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-black text-[#7f1d1d] shadow">
-                          {menu.category?.name || "Menu"}
-                        </div>
-
-                        <div
-                          className={`absolute right-4 top-4 rounded-full px-3 py-1 text-xs font-black shadow ${
-                            available
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
-                        >
-                          {available ? "Tersedia" : "Habis"}
-                        </div>
-                      </div>
-
-                      <div className="p-5">
-                        <div className="mb-2 flex items-start justify-between gap-3">
-                          <h3 className="line-clamp-2 text-lg font-black text-gray-950">
-                            {menuName}
-                          </h3>
-
-                          <div className="flex items-center gap-1 rounded-full bg-yellow-50 px-2 py-1 text-xs font-black text-yellow-700">
-                            <Star className="h-3 w-3 fill-current" />
-                            5.0
-                          </div>
-                        </div>
-
-                        <p className="line-clamp-2 min-h-[40px] text-sm leading-5 text-gray-500">
-                          {menu.description || "Menu kantin siap dipesan."}
-                        </p>
-
-                        <div className="mt-5 flex items-center justify-between gap-4">
-                          <div>
-                            <p className="text-xs font-bold text-gray-400">
-                              Harga
-                            </p>
-                            <p className="text-lg font-black text-[#7f1d1d]">
-                              {formatRupiah(menu.price)}
-                            </p>
-                          </div>
-
-                          <button
-                            onClick={() => handleAddToCart(menu)}
-                            disabled={!available}
-                            className="flex items-center gap-2 rounded-2xl bg-[#7f1d1d] px-4 py-3 text-sm font-black text-white transition hover:bg-[#991b1b] disabled:cursor-not-allowed disabled:bg-gray-300"
-                          >
-                            <ShoppingCart className="h-4 w-4" />
-                            Tambah
-                          </button>
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            )}
-          </section>
+          <MenuList
+            menus={filteredMenus}
+            search={search}
+            selectedVendor={selectedVendor}
+            loadingMenus={loadingMenus}
+            onSearchChange={setSearch}
+            onAddToCart={handleAddToCart}
+          />
         </section>
       </div>
     </main>

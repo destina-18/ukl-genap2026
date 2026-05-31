@@ -4,26 +4,14 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
+  Loader2,
   Mail,
   Phone,
-  RefreshCcw,
-  ShieldCheck,
+  Shield,
   User,
-  LogOut,
 } from "lucide-react";
 
-type CustomerProfile = {
-  id?: number | string;
-  name?: string;
-  email?: string;
-  whatsappNumber?: string;
-  phone?: string;
-  role?: string;
-  createdAt?: string;
-  isVerified?: boolean;
-  verified?: boolean;
-  [key: string]: any;
-};
+import EditProfile, { type CustomerProfile } from "./edit-profile";
 
 function getCookie(name: string) {
   if (typeof document === "undefined") return "";
@@ -38,44 +26,23 @@ function getCookie(name: string) {
   return "";
 }
 
-function formatDate(dateString?: string) {
-  if (!dateString) return "-";
-
-  return new Intl.DateTimeFormat("id-ID", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(dateString));
-}
-
 function getProfileFromResponse(response: any) {
   return (
     response?.data?.user ||
-    response?.data?.customer ||
+    response?.data?.profile ||
     response?.data ||
     response?.user ||
-    response?.customer ||
+    response?.profile ||
     response
   );
 }
 
-export default function CustomersProfilePage() {
+export default function CustomerProfilePage() {
   const BASE_API_URL =
     process.env.NEXT_PUBLIC_BASE_API_URL || "https://kantinklik.up.railway.app";
 
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [loading, setLoading] = useState(true);
-
-  function handleLogout() {
-    document.cookie = "accessToken=; path=/; max-age=0";
-    document.cookie = "accesstoken=; path=/; max-age=0";
-    document.cookie = "role=; path=/; max-age=0";
-
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("role");
-    localStorage.removeItem("user");
-
-    window.location.href = "/sign-in";
-  }
 
   async function getProfile() {
     try {
@@ -90,17 +57,7 @@ export default function CustomersProfilePage() {
         return;
       }
 
-      const savedUser = localStorage.getItem("user");
-
-      if (savedUser) {
-        try {
-          setProfile(JSON.parse(savedUser));
-        } catch (error) {
-          console.log("Gagal membaca user dari localStorage:", error);
-        }
-      }
-
-      const response = await fetch(`${BASE_API_URL}/api/customers/me`, {
+      const response = await fetch(`${BASE_API_URL}/api/users/me`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -110,31 +67,39 @@ export default function CustomersProfilePage() {
       });
 
       const data = await response.json().catch(() => null);
-      console.log("CUSTOMER PROFILE RESPONSE:", data);
+
+      console.log("PROFILE RESPONSE:", data);
 
       if (!response.ok) {
-        console.log("Gagal ambil profile dari BE:", data);
+        alert(data?.message || "Gagal mengambil profile");
         return;
       }
 
       const profileData = getProfileFromResponse(data);
       setProfile(profileData);
-
-      if (profileData) {
-        localStorage.setItem("user", JSON.stringify(profileData));
-      }
     } catch (error) {
       console.error("GET PROFILE ERROR:", error);
+      alert("Gagal terhubung ke server");
     } finally {
       setLoading(false);
     }
   }
 
+  function handleLogout() {
+    document.cookie =
+      "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie =
+      "role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("role");
+
+    window.location.href = "/sign-in";
+  }
+
   useEffect(() => {
     getProfile();
   }, []);
-
-  const verified = profile?.isVerified || profile?.verified;
 
   return (
     <main className="min-h-screen bg-[#fff7f7] px-4 py-8 text-gray-900 md:px-8">
@@ -151,148 +116,129 @@ export default function CustomersProfilePage() {
               </Link>
 
               <h1 className="text-3xl font-black tracking-tight md:text-5xl">
-                Profile Customer
+                Profile Saya
               </h1>
 
               <p className="mt-3 max-w-xl text-sm leading-6 text-red-100 md:text-base">
-                Lihat informasi akun customer yang sedang login di KantinKlik.
+                Lihat dan edit data akun customer kamu sendiri.
               </p>
             </div>
 
-            <button
-              onClick={getProfile}
-              disabled={loading}
-              className="flex w-fit items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-[#7f1d1d] shadow-lg transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-              Refresh
-            </button>
+            {profile && (
+              <EditProfile
+                profile={profile}
+                baseApiUrl={BASE_API_URL}
+                onSuccess={getProfile}
+              />
+            )}
           </div>
         </section>
 
         {loading ? (
-          <section className="flex min-h-[300px] items-center justify-center rounded-[1.5rem] bg-white shadow-lg shadow-red-900/5">
+          <section className="flex min-h-[350px] items-center justify-center rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white shadow-lg shadow-red-900/5">
             <div className="text-center">
-              <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-[#7f1d1d]/20 border-t-[#7f1d1d]" />
-              <p className="text-sm font-bold text-[#7f1d1d]">
+              <Loader2 className="mx-auto mb-4 h-10 w-10 animate-spin text-[#7f1d1d]" />
+              <p className="text-sm font-black text-[#7f1d1d]">
                 Memuat profile...
               </p>
             </div>
           </section>
+        ) : !profile ? (
+          <section className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-8 text-center shadow-lg shadow-red-900/5">
+            <h2 className="text-xl font-black text-gray-950">
+              Profile tidak ditemukan
+            </h2>
+            <p className="mt-2 text-sm text-gray-500">
+              Coba login ulang atau refresh halaman.
+            </p>
+          </section>
         ) : (
-          <section className="grid grid-cols-1 gap-6 lg:grid-cols-[360px_1fr]">
+          <section className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_1fr]">
             <aside className="h-fit rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-6 text-center shadow-lg shadow-red-900/5">
-              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-[2rem] bg-[#7f1d1d]/10 text-[#7f1d1d]">
-                <User className="h-12 w-12" />
+              <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-[2rem] bg-[#7f1d1d]/10 text-[#7f1d1d]">
+                <User className="h-14 w-14" />
               </div>
 
               <h2 className="mt-5 text-2xl font-black text-gray-950">
-                {profile?.name || "Customer"}
+                {profile.name || "Customer"}
               </h2>
 
-              <p className="mt-2 text-sm font-semibold text-gray-500">
-                {profile?.email || "-"}
+              <p className="mt-1 text-sm font-semibold text-gray-500">
+                {profile.email || "-"}
               </p>
 
-              <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#7f1d1d]/10 px-4 py-2 text-sm font-black text-[#7f1d1d]">
-                <ShieldCheck className="h-4 w-4" />
-                {profile?.role || "CUSTOMER"}
+              <div className="mt-5 inline-flex rounded-full bg-[#7f1d1d]/10 px-4 py-2 text-xs font-black text-[#7f1d1d]">
+                {profile.role || "CUSTOMER"}
               </div>
 
               <button
+                type="button"
                 onClick={handleLogout}
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-red-50 px-5 py-4 text-sm font-black text-red-700 transition hover:bg-red-100"
+                className="mt-6 w-full rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-black text-red-700 transition hover:bg-red-100"
               >
-                <LogOut className="h-4 w-4" />
                 Logout
               </button>
             </aside>
 
             <section className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-6 shadow-lg shadow-red-900/5">
-              <div className="mb-6">
-                <h2 className="text-2xl font-black text-gray-950">
-                  Informasi Akun
-                </h2>
-                <p className="mt-2 text-sm text-gray-500">
-                  Data ini diambil dari akun yang sedang login.
-                </p>
-              </div>
+              <h2 className="mb-5 text-2xl font-black text-gray-950">
+                Detail Profile
+              </h2>
 
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] p-5">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
-                      <User className="h-6 w-6" />
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-bold text-gray-500">Nama</p>
-                      <p className="mt-1 text-lg font-black text-gray-950">
-                        {profile?.name || "-"}
-                      </p>
-                    </div>
+                  <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-white text-[#7f1d1d]">
+                    <User className="h-5 w-5" />
                   </div>
-                </div>
 
-                <div className="rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] p-5">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
-                      <Mail className="h-6 w-6" />
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-bold text-gray-500">Email</p>
-                      <p className="mt-1 break-all text-lg font-black text-gray-950">
-                        {profile?.email || "-"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] p-5">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
-                      <Phone className="h-6 w-6" />
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-bold text-gray-500">
-                        No WhatsApp
-                      </p>
-                      <p className="mt-1 text-lg font-black text-gray-950">
-                        {profile?.whatsappNumber || profile?.phone || "-"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] p-5">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
-                      <ShieldCheck className="h-6 w-6" />
-                    </div>
-
-                    <div>
-                      <p className="text-sm font-bold text-gray-500">
-                        Status Verifikasi
-                      </p>
-                      <p
-                        className={`mt-1 text-lg font-black ${
-                          verified ? "text-green-700" : "text-yellow-700"
-                        }`}
-                      >
-                        {verified ? "Terverifikasi" : "Belum diketahui"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] p-5">
-                  <p className="text-sm font-bold text-gray-500">
-                    Tanggal Daftar
+                  <p className="text-xs font-black uppercase tracking-wide text-gray-400">
+                    Nama
                   </p>
-                  <p className="mt-1 text-lg font-black text-gray-950">
-                    {formatDate(profile?.createdAt)}
+
+                  <p className="mt-1 text-base font-black text-gray-950">
+                    {profile.name || "-"}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] p-5">
+                  <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-white text-[#7f1d1d]">
+                    <Mail className="h-5 w-5" />
+                  </div>
+
+                  <p className="text-xs font-black uppercase tracking-wide text-gray-400">
+                    Email
+                  </p>
+
+                  <p className="mt-1 break-all text-base font-black text-gray-950">
+                    {profile.email || "-"}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] p-5">
+                  <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-white text-[#7f1d1d]">
+                    <Phone className="h-5 w-5" />
+                  </div>
+
+                  <p className="text-xs font-black uppercase tracking-wide text-gray-400">
+                    WhatsApp
+                  </p>
+
+                  <p className="mt-1 text-base font-black text-gray-950">
+                    {profile.whatsappNumber || profile.phone || "-"}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] p-5">
+                  <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-white text-[#7f1d1d]">
+                    <Shield className="h-5 w-5" />
+                  </div>
+
+                  <p className="text-xs font-black uppercase tracking-wide text-gray-400">
+                    Role
+                  </p>
+
+                  <p className="mt-1 text-base font-black text-gray-950">
+                    {profile.role || "CUSTOMER"}
                   </p>
                 </div>
               </div>
