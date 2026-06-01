@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ShoppingCart, Utensils } from "lucide-react";
+import QRCode from "react-qr-code";
 
 import CartItemCard, { type CartItem } from "./cart-item-card";
 import CartSummary, { type PaymentMethod } from "./cart-summary";
@@ -27,6 +28,20 @@ export default function CustomersCartPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH");
   const [loadingCheckout, setLoadingCheckout] = useState(false);
+  const [checkoutResult, setCheckoutResult] = useState<null | {
+    orderCode: string;
+    totalAmount: number;
+    paymentStatus: string;
+    qrCodeUrl?: string;
+  }>(null);
+
+  function formatRupiah(value: number) {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(value);
+  }
 
   function loadCart() {
     const cart = localStorage.getItem("cart");
@@ -110,7 +125,7 @@ export default function CustomersCartPage() {
         return;
       }
 
-      const payload = {
+      const checkoutPayload = {
         paymentMethod,
         items: cartItems.map((item) => ({
           menuId: Number(item.id),
@@ -118,7 +133,7 @@ export default function CustomersCartPage() {
         })),
       };
 
-      console.log("CHECKOUT PAYLOAD:", payload);
+      console.log("CHECKOUT PAYLOAD:", checkoutPayload);
 
       const response = await fetch(`${BASE_API_URL}/api/orders/checkout`, {
         method: "POST",
@@ -126,7 +141,7 @@ export default function CustomersCartPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(checkoutPayload),
       });
 
       const data = await response.json().catch(() => null);
@@ -138,8 +153,21 @@ export default function CustomersCartPage() {
         return;
       }
 
+      const result = data?.data ?? data;
+
       localStorage.removeItem("cart");
       setCartItems([]);
+
+      if (paymentMethod === "ONLINE" && result?.qrCodeUrl) {
+        setCheckoutResult({
+          orderCode: result.orderCode,
+          totalAmount: result.totalAmount,
+          paymentStatus: result.paymentStatus,
+          qrCodeUrl: result.qrCodeUrl,
+        });
+        alert("Checkout berhasil. Silakan scan QR untuk membayar.");
+        return;
+      }
 
       alert("Checkout berhasil");
       window.location.href = "/customers/orders";
@@ -197,7 +225,60 @@ export default function CustomersCartPage() {
           </div>
         </section>
 
-        {cartItems.length === 0 ? (
+        {checkoutResult?.qrCodeUrl ? (
+          <section className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
+            <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-6 shadow-lg shadow-red-900/5">
+              <h2 className="text-2xl font-black text-gray-950">
+                Selesaikan Pembayaran
+              </h2>
+              <p className="mt-2 text-sm text-gray-500">
+                Scan QRIS berikut untuk membayar pesanan.
+              </p>
+
+              <div className="mt-6 flex flex-col items-center gap-4 rounded-2xl border border-dashed border-[#7f1d1d]/20 bg-[#fff7f7] p-6">
+                <QRCode value={checkoutResult.qrCodeUrl} size={220} />
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">
+                    Order #{checkoutResult.orderCode}
+                  </p>
+                  <p className="text-lg font-black text-[#7f1d1d]">
+                    {formatRupiah(checkoutResult.totalAmount)}
+                  </p>
+                  <p className="text-xs font-semibold text-gray-500">
+                    Status: {checkoutResult.paymentStatus}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link
+                  href="/customers/orders"
+                  className="inline-flex items-center justify-center rounded-2xl bg-[#7f1d1d] px-5 py-3 text-sm font-black text-white shadow-lg shadow-red-900/20 transition hover:bg-[#991b1b]"
+                >
+                  Lihat Status Pesanan
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setCheckoutResult(null)}
+                  className="inline-flex items-center justify-center rounded-2xl border border-[#7f1d1d]/20 bg-white px-5 py-3 text-sm font-black text-[#7f1d1d] transition hover:bg-[#fff7f7]"
+                >
+                  Buat Pesanan Baru
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-6 shadow-lg shadow-red-900/5">
+              <h3 className="text-lg font-black text-gray-950">
+                Tips Pembayaran
+              </h3>
+              <ul className="mt-3 space-y-3 text-sm text-gray-600">
+                <li>Gunakan aplikasi e-wallet / mobile banking.</li>
+                <li>Scan QRIS di atas dan selesaikan pembayaran.</li>
+                <li>Status akan berubah otomatis setelah pembayaran sukses.</li>
+              </ul>
+            </div>
+          </section>
+        ) : cartItems.length === 0 ? (
           <section className="rounded-[1.5rem] border border-dashed border-[#7f1d1d]/20 bg-white p-10 text-center shadow-lg shadow-red-900/5">
             <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
               <ShoppingCart className="h-10 w-10" />

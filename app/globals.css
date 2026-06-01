@@ -49,6 +49,9 @@
 }
 
 :root {
+  --font-sans: var(--font-dm-sans);
+  --font-heading: var(--font-plus-jakarta);
+  --font-mono: var(--font-jetbrains-mono);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -126,5 +129,13 @@
   }
   html {
     @apply font-sans;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
   }
 }
