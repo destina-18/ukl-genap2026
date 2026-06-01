@@ -197,7 +197,7 @@ export default function CustomersOrdersPage() {
                   gain2.connect(ctx.destination);
                   osc2.start();
                   osc2.stop(ctx.currentTime + 0.4);
-                } catch (err) {}
+                } catch (err) { }
               }, 100);
             }
           }
@@ -220,7 +220,7 @@ export default function CustomersOrdersPage() {
         );
 
         setOrderUpdateNotification(data);
-        
+
         // 2. Refresh data lengkap dari API di background secara silent
         getOrders(true);
       }
@@ -294,7 +294,7 @@ export default function CustomersOrdersPage() {
 
             <button
               type="button"
-              onClick={getOrders}
+              onClick={() => getOrders()}
               disabled={loading}
               className="flex w-fit items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-[#7f1d1d] shadow-lg transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-70"
             >
