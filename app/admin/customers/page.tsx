@@ -21,6 +21,7 @@ import ResetPasswordCustomer from "./resetpw";
 import DetailCustomer from "./detail"; 
 import VerifyCustomer from "./verify";
 
+
 type Customer = {
   id: number;
   name?: string;

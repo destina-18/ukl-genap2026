@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
   ClipboardList,
   Clock,
+  Download,
   ShoppingBag,
   Utensils,
   Wallet,
@@ -189,6 +191,29 @@ function getOrderItems(order: Order) {
     order.order_details ||
     []
   );
+}
+
+function getCookie(name: string) {
+  if (typeof document === "undefined") return "";
+
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+
+  if (parts.length === 2) {
+    return parts.pop()?.split(";").shift() || "";
+  }
+
+  return "";
+}
+
+function buildReceiptUrl(baseApiUrl: string, orderId: number | string) {
+  const cleanBaseUrl = baseApiUrl.replace(/\/$/, "");
+
+  if (cleanBaseUrl.endsWith("/api")) {
+    return `${cleanBaseUrl}/orders/${orderId}/receipt`;
+  }
+
+  return `${cleanBaseUrl}/api/orders/${orderId}/receipt`;
 }
 
 function toNumber(value: any) {
@@ -405,6 +430,8 @@ export default function OrderCard({
   onCancelOrder,
   onRefresh,
 }: OrderCardProps) {
+  const [receiptLoading, setReceiptLoading] = useState(false);
+
   const orderId = getOrderId(order);
   const orderCode = getOrderCode(order);
   const statusInfo = getStatusStyle(order.status);
@@ -414,6 +441,69 @@ export default function OrderCard({
   const orderStatus = String(order.status || "").toUpperCase();
   const canCancel = orderStatus === "PENDING";
   const canRating = orderStatus === "COMPLETED";
+  const canDownloadReceipt = orderStatus === "COMPLETED" && !!orderId;
+
+  async function handleDownloadReceipt() {
+    if (!orderId) {
+      alert("ID order tidak ditemukan.");
+      return;
+    }
+
+    try {
+      setReceiptLoading(true);
+
+      const token =
+        getCookie("accessToken") ||
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("token") ||
+        "";
+
+      if (!token) {
+        alert("Token tidak ditemukan. Silakan login ulang sebagai customer.");
+        return;
+      }
+
+      const response = await fetch(buildReceiptUrl(baseApiUrl, orderId), {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/pdf",
+        },
+      });
+
+      if (!response.ok) {
+        let message = "Gagal download struk.";
+
+        try {
+          const errorData = await response.json();
+          message = errorData?.message || message;
+        } catch {
+          message = `Gagal download struk. Status: ${response.status}`;
+        }
+
+        alert(message);
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `struk-order-${orderId}.pdf`;
+
+      document.body.appendChild(link);
+      link.click();
+
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("DOWNLOAD RECEIPT ERROR:", error);
+      alert("Terjadi kesalahan saat download struk.");
+    } finally {
+      setReceiptLoading(false);
+    }
+  }
 
   return (
     <article className="overflow-hidden rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white shadow-lg shadow-red-900/5">
@@ -443,7 +533,8 @@ export default function OrderCard({
 
             {(order.rejectionReason || order.rejection_reason) && (
               <p className="mt-2 rounded-xl bg-red-50 px-3 py-2 text-sm font-bold text-red-700">
-                Alasan ditolak: {order.rejectionReason || order.rejection_reason}
+                Alasan ditolak:{" "}
+                {order.rejectionReason || order.rejection_reason}
               </p>
             )}
           </div>
@@ -530,6 +621,18 @@ export default function OrderCard({
         )}
 
         <div className="mt-5 flex flex-col gap-3 md:flex-row md:justify-end">
+          {canDownloadReceipt && (
+            <button
+              type="button"
+              onClick={handleDownloadReceipt}
+              disabled={receiptLoading}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-green-600 px-5 py-3 text-sm font-black text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              <Download className="h-4 w-4" />
+              {receiptLoading ? "Mengunduh..." : "Download Struk"}
+            </button>
+          )}
+
           {canCancel && (
             <button
               type="button"
