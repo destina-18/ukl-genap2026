@@ -1,14 +1,68 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { ArrowRight, ClipboardList, ShoppingBag, Store } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight, ClipboardList, ShoppingBag, Store, FileText, BarChart2, ShieldCheck, Search, ShoppingCart, Package } from "lucide-react";
 
+/* ─── Reusable scroll-reveal component ─── */
+function FadeIn({
+  children,
+  delay = 0,
+  className = "",
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  className?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.12 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible
+          ? "translateY(0px) scale(1)"
+          : "translateY(52px) scale(0.96)",
+        transition: `opacity 0.65s ease ${delay}ms, transform 0.65s cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ─── Main page ─── */
 export default function Home() {
   const [totalMenus, setTotalMenus] = useState<number>(0);
   const [totalVendors, setTotalVendors] = useState<number>(0);
   const [totalCategories, setTotalCategories] = useState<number>(0);
   const [loadingStats, setLoadingStats] = useState<boolean>(true);
+  const [scrolled, setScrolled] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     async function fetchHomeStats() {
@@ -76,13 +130,27 @@ export default function Home() {
     fetchHomeStats();
   }, []);
 
+  const features = [
+    { icon: ClipboardList, title: "Lihat menu real-time", desc: "Customer bisa melihat menu dari semua vendor kantin yang tersedia dan selalu up-to-date." },
+    { icon: ShoppingBag, title: "Pesan dengan mudah", desc: "Pilih menu, tambah ke keranjang, dan checkout langsung dari website tanpa antri." },
+    { icon: FileText, title: "Struk digital otomatis", desc: "Setiap order selesai otomatis bisa download struk PDF sebagai bukti transaksi." },
+    { icon: Store, title: "Kelola menu vendor", desc: "Vendor bisa tambah, ubah, dan nonaktifkan menu kapan saja langsung dari dashboard." },
+    { icon: BarChart2, title: "Pantau statistik", desc: "Admin dan vendor bisa lihat ringkasan order, pendapatan, dan performa menu." },
+    { icon: ShieldCheck, title: "Akses berbasis peran", desc: "Sistem role Customer, Vendor, dan Admin memastikan setiap pengguna hanya akses fitur yang relevan." },
+  ];
+
   return (
-    <main className="min-h-screen overflow-hidden bg-[#fff7f7] text-gray-900">
+    <main className="min-h-screen bg-[#fff7f7] text-gray-900">
       {/* NAVBAR */}
-      <nav className="sticky top-0 z-50 border-b border-[#7f1d1d]/10 bg-[#fff7f7]/90 px-6 py-4 backdrop-blur-xl md:px-16">
+      <nav
+        className={`sticky top-0 z-50 px-6 py-4 transition-all duration-300 md:px-16 ${scrolled
+            ? "border-b border-white/20 bg-white/60 shadow-lg shadow-black/5 backdrop-blur-2xl"
+            : "border-b border-transparent bg-transparent"
+          }`}
+      >
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#991b1b] to-[#450a0a] text-xl font-black text-white">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#991b1b] to-[#450a0a] text-xl font-black text-white shadow-lg shadow-red-900/30">
               K
             </div>
 
@@ -93,13 +161,24 @@ export default function Home() {
               <p className="text-xs text-gray-500">Kantin sekolah digital</p>
             </div>
           </div>
+
+          <Link
+            href="/sign-in"
+            id="navbar-cta"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#7f1d1d] to-[#450a0a] px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-red-900/25 transition-all duration-200 hover:scale-105 hover:shadow-red-900/40"
+          >
+            Mulai Sekarang
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </nav>
 
       {/* HERO */}
       <section className="px-6 py-20 md:px-16 md:py-28">
         <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
-          <div className="text-center lg:text-left">
+
+          {/* Hero — teks kiri */}
+          <FadeIn delay={0} className="text-center lg:text-left">
             <div className="mb-6 inline-flex rounded-full border border-[#7f1d1d]/20 bg-white px-5 py-2 text-sm font-bold text-[#7f1d1d]">
               Website Pemesanan Makanan Kantin
             </div>
@@ -132,10 +211,10 @@ export default function Home() {
                 Tentang KantinKlik
               </a>
             </div>
-          </div>
+          </FadeIn>
 
-          {/* CARD DATA REAL */}
-          <div className="relative">
+          {/* Hero — card kanan */}
+          <FadeIn delay={160} className="relative">
             <div className="absolute -inset-6 rounded-[3rem] bg-[#7f1d1d]/20 blur-2xl" />
 
             <div className="relative rounded-[2rem] bg-white p-6 shadow-2xl shadow-red-900/10">
@@ -209,24 +288,115 @@ export default function Home() {
                 </div>
               </div>
             </div>
+          </FadeIn>
+
+        </div>
+      </section>
+
+      {/* FITUR */}
+      <section className="px-6 py-20 md:px-16">
+        <div className="mx-auto max-w-7xl">
+
+          <FadeIn delay={0}>
+            <p className="text-sm font-black uppercase tracking-[0.25em] text-[#7f1d1d]">
+              Fitur
+            </p>
+            <h2 className="mt-4 text-4xl font-black text-gray-950">
+              Semua yang kamu butuhkan,{" "}
+              <span className="bg-gradient-to-r from-[#991b1b] to-[#450a0a] bg-clip-text text-transparent">
+                dalam satu tempat.
+              </span>
+            </h2>
+          </FadeIn>
+
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {features.map(({ icon: Icon, title, desc }, i) => (
+              <FadeIn key={title} delay={i * 90}>
+                <div className="h-full rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+                  <div className="mb-4 inline-flex rounded-xl bg-red-50 p-3 text-[#991b1b]">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-bold text-gray-900">{title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-gray-500">{desc}</p>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CARA KERJA */}
+      <section className="px-6 py-20 md:px-16 bg-white">
+        <div className="mx-auto max-w-7xl">
+          <p className="text-sm font-black uppercase tracking-[0.25em] text-[#7f1d1d]">
+            Cara Kerja
+          </p>
+          <h2 className="mt-4 text-4xl font-black text-gray-950">
+            Tiga langkah,{" "}
+            <span className="bg-gradient-to-r from-[#991b1b] to-[#450a0a] bg-clip-text text-transparent">
+              selesai.
+            </span>
+          </h2>
+
+          <div className="mt-12 grid gap-6 sm:grid-cols-3">
+            {[
+              {
+                step: "01",
+                icon: Search,
+                title: "Pilih menu",
+                desc: "Lihat menu dari semua vendor kantin. Filter berdasarkan kategori atau vendor favoritmu.",
+              },
+              {
+                step: "02",
+                icon: ShoppingCart,
+                title: "Tambah & checkout",
+                desc: "Masukkan menu ke keranjang lalu checkout. Tidak perlu antri — order langsung masuk ke vendor.",
+              },
+              {
+                step: "03",
+                icon: Package,
+                title: "Ambil pesanan",
+                desc: "Setelah vendor siapkan pesanan, kamu tinggal ambil di kantin. Struk PDF otomatis tersedia.",
+              },
+            ].map(({ step, icon: Icon, title, desc }) => (
+              <div key={step} className="relative overflow-hidden rounded-2xl border border-gray-100 bg-[#fff7f7] p-6">
+                <div className="mb-4 inline-flex rounded-xl bg-white p-3 text-[#991b1b] shadow-sm">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <p className="mb-1 text-xs font-black uppercase tracking-widest text-[#b91c1c]">
+                  Langkah {step}
+                </p>
+                <h3 className="font-bold text-gray-900">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-500">{desc}</p>
+                <span className="absolute -bottom-4 -right-2 text-8xl font-black text-[#7f1d1d]/5 select-none">
+                  {step}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* TENTANG */}
       <section id="tentang" className="bg-white px-6 py-20 text-center md:px-16">
-        <p className="text-sm font-black uppercase tracking-[0.25em] text-[#7f1d1d]">
-          Tentang
-        </p>
+        <FadeIn delay={0}>
+          <p className="text-sm font-black uppercase tracking-[0.25em] text-[#7f1d1d]">
+            Tentang
+          </p>
+        </FadeIn>
 
-        <h2 className="mt-4 text-4xl font-black text-gray-950">
-          Satu website untuk kantin sekolah
-        </h2>
+        <FadeIn delay={100}>
+          <h2 className="mt-4 text-4xl font-black text-gray-950">
+            Satu website untuk kantin sekolah
+          </h2>
+        </FadeIn>
 
-        <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-gray-600">
-          Customer bisa melihat menu, vendor bisa mengelola makanan, dan admin
-          bisa memantau data sistem.
-        </p>
+        <FadeIn delay={200}>
+          <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-gray-600">
+            Customer bisa melihat menu, vendor bisa mengelola makanan, dan admin
+            bisa memantau data sistem.
+          </p>
+        </FadeIn>
       </section>
     </main>
   );
