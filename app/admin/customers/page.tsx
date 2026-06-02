@@ -21,7 +21,6 @@ import ResetPasswordCustomer from "./resetpw";
 import DetailCustomer from "./detail"; 
 import VerifyCustomer from "./verify";
 
-
 type Customer = {
   id: number;
   name?: string;
@@ -305,9 +304,6 @@ export default function AdminCustomersPage() {
                       No HP
                     </TableHead>
                     <TableHead className="font-black text-[#7f1d1d]">
-                      Alamat
-                    </TableHead>
-                    <TableHead className="font-black text-[#7f1d1d]">
                       Verifikasi
                     </TableHead>
                     <TableHead className="font-black text-[#7f1d1d]">
@@ -342,10 +338,6 @@ export default function AdminCustomersPage() {
 
                         <TableCell className="font-medium text-gray-700">
                           {getCustomerPhone(customer)}
-                        </TableCell>
-
-                        <TableCell className="max-w-[240px] truncate font-medium text-gray-700">
-                          {customer.address || "-"}
                         </TableCell>
 
                         <TableCell>
