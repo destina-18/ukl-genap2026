@@ -1,81 +1,61 @@
 "use client";
 
-import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
 import {
-  ArrowLeft,
-  Mail,
+  Loader2,
   MessageSquare,
-  Phone,
   Star,
   Store,
-  User,
+  UserRound,
   Utensils,
 } from "lucide-react";
 
-type VendorData = {
+type AnyObj = Record<string, any>;
+
+type Vendor = {
   id?: number | string;
-  canteenName?: string;
-  name?: string;
-  description?: string;
-  logoUrl?: string | null;
+  vendorId?: number | string;
+  _id?: number | string;
+
   canteenNumber?: number | string;
-  isActive?: boolean;
-  user?: {
-    id?: number | string;
-    name?: string;
-    email?: string;
-    whatsappNumber?: string;
-  };
-};
+  canteenName?: string;
+  vendorName?: string;
+  name?: string;
 
-type RatingItem = {
-  id?: number | string;
-  rating?: number;
-  stars?: number;
-  comment?: string;
-  createdAt?: string;
-  created_at?: string;
+  description?: string;
+  logoUrl?: string;
+  logo?: string;
+  image?: string;
 
-  customer?: {
-    id?: number | string;
-    name?: string;
-    email?: string;
-  };
+  ownerName?: string;
 
-  user?: {
-    id?: number | string;
-    name?: string;
-    email?: string;
-  };
+  user?: AnyObj;
+  owner?: AnyObj;
+  account?: AnyObj;
 
-  targetMenu?: {
-    id?: number | string;
-    name?: string;
-    price?: number | string;
-    imageUrl?: string | null;
-  };
-
-  menu?: {
-    id?: number | string;
-    name?: string;
-    price?: number | string;
-    imageUrl?: string | null;
-  };
-
-  orderItem?: {
-    id?: number | string;
-    menu?: {
-      id?: number | string;
-      name?: string;
-      price?: number | string;
-      imageUrl?: string | null;
-    };
-  };
+  ratings?: AnyObj[];
+  reviews?: AnyObj[];
+  menuRatings?: AnyObj[];
+  ratingMenus?: AnyObj[];
+  menus?: AnyObj[];
 
   [key: string]: any;
 };
+
+const RAW_BASE_API_URL =
+  process.env.NEXT_PUBLIC_BASE_API_URL ||
+  "https://kantinklik.up.railway.app";
+
+function getApiBaseUrl() {
+  const cleanUrl = RAW_BASE_API_URL.replace(/\/$/, "");
+
+  if (cleanUrl.endsWith("/api")) {
+    return cleanUrl;
+  }
+
+  return `${cleanUrl}/api`;
+}
 
 function getCookie(name: string) {
   if (typeof document === "undefined") return "";
@@ -90,393 +70,436 @@ function getCookie(name: string) {
   return "";
 }
 
-function getToken() {
-  if (typeof window === "undefined") return "";
+function unwrapResponse(result: any) {
+  return result?.data?.vendor || result?.data || result?.vendor || result;
+}
+
+function findDeepValue(obj: any, keys: string[]): any {
+  if (!obj || typeof obj !== "object") return "";
+
+  for (const key of keys) {
+    if (obj[key] !== undefined && obj[key] !== null && obj[key] !== "") {
+      return obj[key];
+    }
+  }
+
+  for (const value of Object.values(obj)) {
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      const found = findDeepValue(value, keys);
+      if (found) return found;
+    }
+  }
+
+  return "";
+}
+
+function getVendorName(vendor: Vendor | null) {
+  if (!vendor) return "-";
 
   return (
-    getCookie("accessToken") ||
-    getCookie("accesstoken") ||
-    localStorage.getItem("accessToken") ||
+    vendor.canteenName ||
+    vendor.vendorName ||
+    vendor.name ||
+    findDeepValue(vendor, ["canteenName", "vendorName", "name"]) ||
+    "-"
+  );
+}
+
+function getVendorDescription(vendor: Vendor | null) {
+  if (!vendor) return "-";
+
+  return (
+    vendor.description ||
+    vendor.address ||
+    findDeepValue(vendor, ["description", "address"]) ||
+    "Enak"
+  );
+}
+
+function getVendorOwnerName(vendor: Vendor | null) {
+  if (!vendor) return "-";
+
+  return (
+    vendor.ownerName ||
+    vendor.user?.name ||
+    vendor.owner?.name ||
+    vendor.account?.name ||
+    vendor.name ||
+    vendor.canteenName ||
+    findDeepValue(vendor, [
+      "ownerName",
+      "fullName",
+      "username",
+      "name",
+      "canteenName",
+    ]) ||
+    "-"
+  );
+}
+
+function getVendorLogo(vendor: Vendor | null) {
+  if (!vendor) return "";
+
+  return (
+    vendor.logoUrl ||
+    vendor.logo ||
+    vendor.image ||
+    findDeepValue(vendor, ["logoUrl", "logo", "image"]) ||
     ""
   );
 }
 
-function getArrayFromResponse(data: any) {
-  if (Array.isArray(data)) return data;
+function getCanteenNumber(vendor: Vendor | null) {
+  if (!vendor) return "-";
 
-  if (Array.isArray(data?.data)) return data.data;
-  if (Array.isArray(data?.data?.data)) return data.data.data;
-
-  if (Array.isArray(data?.ratings)) return data.ratings;
-  if (Array.isArray(data?.data?.ratings)) return data.data.ratings;
-
-  if (Array.isArray(data?.items)) return data.items;
-  if (Array.isArray(data?.data?.items)) return data.data.items;
-
-  if (Array.isArray(data?.result)) return data.result;
-  if (Array.isArray(data?.data?.result)) return data.data.result;
-
-  return [];
-}
-
-function getObjectFromResponse(data: any) {
-  return data?.data || data?.vendor || data?.profile || data;
-}
-
-function getRatingValue(item: RatingItem) {
-  return Number(item.rating || item.stars || 0);
-}
-
-function getCustomerName(item: RatingItem) {
-  return item.customer?.name || item.user?.name || "Customer";
-}
-
-function getMenuName(item: RatingItem) {
   return (
-    item.targetMenu?.name ||
+    vendor.canteenNumber ||
+    findDeepValue(vendor, ["canteenNumber", "nomorKantin", "number"]) ||
+    "-"
+  );
+}
+
+function getRatingValue(item: AnyObj) {
+  return Number(item.stars || item.rating || item.rate || item.score || 0);
+}
+
+function getMenuName(item: AnyObj) {
+  return (
     item.menu?.name ||
     item.orderItem?.menu?.name ||
+    item.menuName ||
+    item.name ||
     "Menu"
   );
 }
 
-function getMenuImage(item: RatingItem) {
+function getCustomerName(item: AnyObj) {
   return (
-    item.targetMenu?.imageUrl ||
-    item.menu?.imageUrl ||
-    item.orderItem?.menu?.imageUrl ||
-    null
+    item.customer?.name ||
+    item.user?.name ||
+    item.customerName ||
+    item.name ||
+    "Customer"
   );
 }
 
-function formatDate(date?: string) {
-  if (!date) return "-";
+function getComment(item: AnyObj) {
+  return item.comment || item.review || item.description || "";
+}
 
-  return new Date(date).toLocaleDateString("id-ID", {
+function formatDate(value?: string) {
+  if (!value) return "-";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return date.toLocaleDateString("id-ID", {
     day: "2-digit",
-    month: "short",
+    month: "long",
     year: "numeric",
   });
 }
 
-function averageRating(ratings: RatingItem[]) {
-  if (ratings.length === 0) return 0;
+function normalizeRatings(vendor: Vendor | null, fetchedRatings: AnyObj[]) {
+  const fromVendor =
+    vendor?.ratings ||
+    vendor?.reviews ||
+    vendor?.menuRatings ||
+    vendor?.ratingMenus ||
+    [];
 
-  const total = ratings.reduce((sum, item) => {
-    return sum + getRatingValue(item);
-  }, 0);
+  const fromMenus =
+    vendor?.menus?.flatMap((menu: AnyObj) => {
+      const menuRatings = menu.ratings || menu.reviews || menu.menuRatings || [];
 
-  return total / ratings.length;
+      return menuRatings.map((rating: AnyObj) => ({
+        ...rating,
+        menu: rating.menu || menu,
+        menuName: rating.menuName || menu.name,
+      }));
+    }) || [];
+
+  return [...fetchedRatings, ...fromVendor, ...fromMenus];
+}
+
+function StarDisplay({ value }: { value: number }) {
+  const rounded = Math.round(value || 0);
+
+  return (
+    <div className="flex items-center gap-1 rounded-full bg-white px-3 py-2 text-yellow-500 shadow-sm">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <Star
+          key={index}
+          className={`h-4 w-4 ${
+            index < rounded ? "fill-yellow-500" : "text-gray-300"
+          }`}
+        />
+      ))}
+    </div>
+  );
 }
 
 export default function CustomerVendorDetailPage() {
   const params = useParams();
-  const vendorId = String(params.id);
+  const vendorId = String(params?.id || "");
 
-  const BASE_API_URL =
-    process.env.NEXT_PUBLIC_BASE_API_URL || "https://kantinklik.up.railway.app";
-
-  const [vendor, setVendor] = useState<VendorData | null>(null);
-  const [ratings, setRatings] = useState<RatingItem[]>([]);
+  const [vendor, setVendor] = useState<Vendor | null>(null);
+  const [ratings, setRatings] = useState<AnyObj[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  async function fetchVendorProfile() {
+  const allRatings = useMemo(() => {
+    return normalizeRatings(vendor, ratings);
+  }, [vendor, ratings]);
+
+  const averageRating = useMemo(() => {
+    const validRatings = allRatings
+      .map((item) => getRatingValue(item))
+      .filter((value) => value > 0);
+
+    if (validRatings.length === 0) return 0;
+
+    const total = validRatings.reduce((sum, value) => sum + value, 0);
+    return total / validRatings.length;
+  }, [allRatings]);
+
+  async function fetchJson(url: string) {
+    const token = getCookie("accessToken");
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Gagal mengambil data dari ${url}`);
+    }
+
+    return response.json();
+  }
+
+  async function fetchVendorDetail() {
     try {
       setLoading(true);
+      setError("");
 
-      const token = getToken();
+      const baseUrl = getApiBaseUrl();
 
-      if (!token) {
-        alert("Token tidak ditemukan. Silakan login ulang.");
-        window.location.href = "/sign-in";
-        return;
-      }
+      const vendorResult = await fetchJson(`${baseUrl}/vendors/${vendorId}`);
+      const vendorData = unwrapResponse(vendorResult);
 
-      /*
-        1. Ambil detail vendor.
-        Kalau endpoint ini tidak ada di BE kamu, bagian ini boleh gagal,
-        rating tetap jalan.
-      */
-      const vendorRes = await fetch(`${BASE_API_URL}/api/vendors/${vendorId}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        cache: "no-store",
-      });
+      setVendor(vendorData);
 
-      const vendorData = await vendorRes.json().catch(() => null);
-      console.log("CUSTOMER VENDOR DETAIL RESPONSE:", vendorData);
+      try {
+        const ratingResult = await fetchJson(
+          `${baseUrl}/ratings/vendor/${vendorId}`
+        );
 
-      if (vendorRes.ok) {
-        setVendor(getObjectFromResponse(vendorData));
-      }
+        const ratingData = unwrapResponse(ratingResult);
 
-      /*
-        2. Ambil semua rating milik vendor.
-        Ini sesuai Swagger kamu:
-        GET /api/ratings/vendor/:vendorId?page=1&limit=100
-      */
-      const ratingRes = await fetch(
-        `${BASE_API_URL}/api/ratings/vendor/${vendorId}?page=1&limit=100`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          cache: "no-store",
+        if (Array.isArray(ratingData)) {
+          setRatings(ratingData);
+        } else if (Array.isArray(ratingData?.ratings)) {
+          setRatings(ratingData.ratings);
+        } else if (Array.isArray(ratingData?.reviews)) {
+          setRatings(ratingData.reviews);
+        } else {
+          setRatings([]);
         }
-      );
-
-      const ratingData = await ratingRes.json().catch(() => null);
-      console.log("CUSTOMER VENDOR RATINGS RESPONSE:", ratingData);
-
-      if (!ratingRes.ok) {
+      } catch {
         setRatings([]);
-        return;
       }
-
-      setRatings(getArrayFromResponse(ratingData));
-    } catch (error) {
-      console.error("ERROR FETCH CUSTOMER VENDOR PROFILE:", error);
-      alert("Gagal mengambil profile vendor");
+    } catch (err: any) {
+      setError(err?.message || "Gagal mengambil detail vendor.");
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    fetchVendorProfile();
+    if (vendorId) {
+      fetchVendorDetail();
+    }
   }, [vendorId]);
 
-  const avg = averageRating(ratings);
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[#fff7f7] px-4 py-8 md:px-10">
+        <div className="flex min-h-[70vh] items-center justify-center rounded-[2rem] bg-white shadow-sm">
+          <div className="flex items-center gap-3 text-[#7f1d1d]">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <p className="font-bold">Memuat detail vendor...</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error || !vendor) {
+    return (
+      <main className="min-h-screen bg-[#fff7f7] px-4 py-8 md:px-10">
+        <div className="rounded-[2rem] border border-red-200 bg-white p-8 text-center shadow-sm">
+          <h1 className="text-2xl font-black text-[#7f1d1d]">
+            Data vendor tidak ditemukan
+          </h1>
+
+          <p className="mt-2 text-sm text-gray-500">
+            {error || "Silakan coba lagi nanti."}
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-[#fff7f7] p-4 text-gray-900 md:p-8">
-      <section className="mx-auto max-w-6xl">
-        <div className="mb-8 rounded-[2rem] bg-gradient-to-br from-[#991b1b] via-[#7f1d1d] to-[#450a0a] p-7 text-white shadow-2xl shadow-red-900/20">
-          <Link
-            href="/customers/menu"
-            className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-black text-red-50 backdrop-blur transition hover:bg-white/20"
-          >
-            <ArrowLeft size={16} />
-            Kembali ke Menu
-          </Link>
+    <main className="min-h-screen bg-[#fff7f7] px-4 py-6 md:px-8 lg:px-10">
+      <section className="mx-auto max-w-7xl">
+        <div className="relative overflow-hidden rounded-[2rem] bg-[#8b1117] p-6 text-white shadow-lg shadow-red-900/10 md:p-8">
+          <div className="max-w-[70%]">
+            <h1 className="text-3xl font-black md:text-5xl">
+              {getVendorName(vendor)}
+            </h1>
 
-          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-bold text-red-50 backdrop-blur">
-                <Store className="h-4 w-4" />
-                Profile Vendor
-              </div>
+            <p className="mt-3 text-sm font-semibold text-red-100 md:text-base">
+              {getVendorDescription(vendor)}
+            </p>
+          </div>
 
-              <h1 className="text-3xl font-black tracking-tight md:text-4xl">
-                {vendor?.canteenName || vendor?.name || "Detail Vendor"}
-              </h1>
-
-              <p className="mt-2 max-w-xl text-sm leading-6 text-red-100">
-                {vendor?.description ||
-                  "Lihat informasi vendor dan rating menu dari customer."}
-              </p>
+          <div className="absolute right-6 top-0 rounded-b-3xl bg-white/15 px-8 py-4 text-center backdrop-blur md:right-10">
+            <div className="flex items-center justify-center gap-2 text-3xl font-black">
+              <Star className="h-7 w-7 fill-yellow-400 text-yellow-400" />
+              {averageRating ? averageRating.toFixed(1) : "0.0"}
             </div>
 
-            <div className="rounded-2xl bg-white/15 px-6 py-5 text-center backdrop-blur">
-              <p className="text-sm font-bold text-red-100">Rating Vendor</p>
-
-              <div className="mt-2 flex items-center justify-center gap-2">
-                <Star className="h-7 w-7 fill-yellow-300 text-yellow-300" />
-
-                <span className="text-4xl font-black">
-                  {avg > 0 ? avg.toFixed(1) : "-"}
-                </span>
-              </div>
-
-              <p className="mt-1 text-xs font-bold text-red-100">
-                {ratings.length} rating menu
-              </p>
-            </div>
+            <p className="mt-1 text-xs font-bold text-red-100">
+              {allRatings.length} rating menu
+            </p>
           </div>
         </div>
 
-        {loading ? (
-          <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-10 text-center text-sm font-semibold text-gray-500 shadow-xl shadow-red-900/5">
-            Mengambil data vendor...
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-6 shadow-xl shadow-red-900/5">
-              <div className="mx-auto flex h-36 w-36 items-center justify-center overflow-hidden rounded-[2rem] bg-[#fff7f7] text-[#7f1d1d]">
-                {vendor?.logoUrl ? (
+        <div className="mt-6 grid gap-6 lg:grid-cols-[400px_1fr]">
+          <aside className="rounded-[2rem] bg-white p-6 shadow-sm ring-1 ring-red-900/10">
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-36 w-36 items-center justify-center overflow-hidden rounded-[2rem] bg-[#fff1f1] text-[#7f1d1d]">
+                {getVendorLogo(vendor) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={vendor.logoUrl}
-                    alt="Logo Vendor"
+                    src={getVendorLogo(vendor)}
+                    alt={getVendorName(vendor)}
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <Store size={56} />
+                  <Store className="h-16 w-16" />
                 )}
               </div>
 
-              <h2 className="mt-6 text-center text-2xl font-black text-gray-950">
-                {vendor?.canteenName || vendor?.name || "-"}
+              <h2 className="mt-6 text-2xl font-black text-gray-950">
+                {getVendorName(vendor)}
               </h2>
 
-              <p className="mt-2 text-center text-sm font-semibold leading-6 text-gray-500">
-                {vendor?.description || "Tidak ada deskripsi vendor."}
+              <p className="mt-2 text-sm font-semibold text-gray-500">
+                {getVendorDescription(vendor)}
               </p>
-
-              <div className="mt-6 space-y-3">
-                <InfoRow
-                  icon={<User size={18} />}
-                  label="Pemilik"
-                  value={vendor?.user?.name || "-"}
-                />
-
-                <InfoRow
-                  icon={<Mail size={18} />}
-                  label="Email"
-                  value={vendor?.user?.email || "-"}
-                />
-
-                <InfoRow
-                  icon={<Phone size={18} />}
-                  label="WhatsApp"
-                  value={vendor?.user?.whatsappNumber || "-"}
-                />
-
-                <InfoRow
-                  icon={<Store size={18} />}
-                  label="Nomor Kantin"
-                  value={
-                    vendor?.canteenNumber ? String(vendor.canteenNumber) : "-"
-                  }
-                />
-              </div>
             </div>
 
-            <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-6 shadow-xl shadow-red-900/5 lg:col-span-2">
-              <div className="mb-6">
-                <h2 className="text-2xl font-black text-gray-950">
-                  Menu yang Pernah Dirating
-                </h2>
+            <div className="mt-8 space-y-4">
+              <div className="rounded-2xl border border-red-900/10 bg-[#fffafa] p-4">
+                <div className="flex items-center gap-3 text-[#9b1c1c]">
+                  <UserRound className="h-5 w-5" />
+                  <p className="text-xs font-black uppercase tracking-wide text-gray-400">
+                    Nama
+                  </p>
+                </div>
 
-                <p className="mt-2 text-sm leading-6 text-gray-500">
-                  Rating vendor dihitung dari rata-rata rating menu-menu vendor
-                  ini.
+                <p className="mt-3 break-words text-sm font-bold text-gray-900">
+                  {getVendorOwnerName(vendor)}
                 </p>
               </div>
 
-              {ratings.length === 0 ? (
-                <div className="rounded-2xl bg-[#fff7f7] p-8 text-center">
-                  <Star className="mx-auto h-10 w-10 text-[#7f1d1d]" />
-
-                  <h3 className="mt-4 text-lg font-black text-gray-950">
-                    Belum ada rating
-                  </h3>
-
-                  <p className="mt-2 text-sm text-gray-500">
-                    Vendor ini belum punya menu yang dirating customer.
+              <div className="rounded-2xl border border-red-900/10 bg-[#fffafa] p-4">
+                <div className="flex items-center gap-3 text-[#9b1c1c]">
+                  <Store className="h-5 w-5" />
+                  <p className="text-xs font-black uppercase tracking-wide text-gray-400">
+                    Nomor Kantin
                   </p>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {ratings.map((item, index) => {
-                    const starValue = getRatingValue(item);
-                    const image = getMenuImage(item);
 
-                    return (
-                      <div
-                        key={String(item.id || index)}
-                        className="rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] p-5"
-                      >
-                        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                          <div className="flex gap-4">
-                            <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white text-[#7f1d1d]">
-                              {image ? (
-                                <img
-                                  src={image}
-                                  alt={getMenuName(item)}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <Utensils size={30} />
-                              )}
-                            </div>
+                <p className="mt-3 break-words text-sm font-bold text-gray-900">
+                  {getCanteenNumber(vendor)}
+                </p>
+              </div>
+            </div>
+          </aside>
 
-                            <div>
-                              <h3 className="text-lg font-black text-gray-950">
-                                {getMenuName(item)}
-                              </h3>
+          <section className="rounded-[2rem] bg-white p-6 shadow-sm ring-1 ring-red-900/10 md:p-8">
+            <h2 className="text-2xl font-black text-gray-950">
+              Menu yang Pernah Dirating
+            </h2>
 
-                              <p className="mt-1 flex items-center gap-2 text-sm font-bold text-gray-500">
-                                <User size={15} />
-                                {getCustomerName(item)}
-                              </p>
+            <p className="mt-2 text-sm font-semibold text-gray-500">
+              Rating vendor dihitung dari rata-rata rating menu-menu vendor ini.
+            </p>
 
-                              <p className="mt-1 text-xs font-semibold text-gray-400">
-                                {formatDate(item.createdAt || item.created_at)}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-1 rounded-full bg-white px-4 py-2">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star
-                                key={star}
-                                className={`h-4 w-4 ${
-                                  star <= starValue
-                                    ? "fill-yellow-400 text-yellow-400"
-                                    : "text-gray-300"
-                                }`}
-                              />
-                            ))}
-                          </div>
+            {allRatings.length === 0 ? (
+              <div className="mt-6 rounded-2xl border border-red-900/10 bg-[#fffafa] p-6 text-center">
+                <p className="font-bold text-gray-700">
+                  Belum ada menu yang dirating.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-6 space-y-5">
+                {allRatings.map((item, index) => (
+                  <article
+                    key={item.id || item.ratingId || index}
+                    className="rounded-2xl border border-red-900/10 bg-[#fffafa] p-5"
+                  >
+                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                      <div className="flex gap-4">
+                        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white text-[#9b1c1c]">
+                          <Utensils className="h-8 w-8" />
                         </div>
 
-                        <div className="mt-4 rounded-2xl bg-white p-4">
-                          <div className="mb-2 flex items-center gap-2 text-[#7f1d1d]">
-                            <MessageSquare size={16} />
-                            <p className="text-xs font-black uppercase tracking-wide">
-                              Komentar
-                            </p>
-                          </div>
+                        <div>
+                          <h3 className="text-lg font-black text-gray-950">
+                            {getMenuName(item)}
+                          </h3>
 
-                          <p className="text-sm font-semibold leading-6 text-gray-700">
-                            {item.comment || "Tidak ada komentar."}
+                          <p className="mt-1 text-sm font-semibold text-gray-500">
+                            oleh {getCustomerName(item)}
+                          </p>
+
+                          <p className="mt-1 text-xs font-bold text-gray-400">
+                            {formatDate(item.createdAt || item.created_at)}
                           </p>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+
+                      <StarDisplay value={getRatingValue(item)} />
+                    </div>
+
+                    <div className="mt-4 rounded-2xl bg-white p-4">
+                      <div className="mb-3 flex items-center gap-2 text-[#9b1c1c]">
+                        <MessageSquare className="h-4 w-4" />
+                        <p className="text-xs font-black uppercase">
+                          Komentar
+                        </p>
+                      </div>
+
+                      <p className="text-sm font-semibold text-gray-800">
+                        {getComment(item) || "Tidak ada komentar."}
+                      </p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
       </section>
     </main>
-  );
-}
-
-function InfoRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-[#7f1d1d]/10 bg-[#fff7f7] p-4">
-      <div className="mb-2 flex items-center gap-2 text-[#7f1d1d]">
-        {icon}
-        <p className="text-xs font-black uppercase tracking-wide text-gray-400">
-          {label}
-        </p>
-      </div>
-
-      <p className="break-words text-sm font-black text-gray-900">{value}</p>
-    </div>
   );
 }
