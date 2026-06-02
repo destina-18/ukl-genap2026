@@ -4,14 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, Users, RefreshCcw, Mail, Phone, Calendar } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
 import AddCustomer from "./add";
@@ -57,6 +49,18 @@ function getCookie(name: string) {
   return "";
 }
 
+function cleanBaseApiUrl(url: string) {
+  return url.replace(/\/$/, "").replace(/\/api$/, "");
+}
+
+function getErrorMessage(data: any, fallback: string) {
+  if (Array.isArray(data?.message)) {
+    return data.message.join("\n");
+  }
+
+  return data?.message || fallback;
+}
+
 function getArrayFromResponse(response: any): Customer[] {
   if (Array.isArray(response)) return response;
 
@@ -89,7 +93,7 @@ function isCustomerVerified(customer: Customer) {
 }
 
 function getCustomerPhone(customer: Customer) {
-  return customer.phone || customer.whatsappNumber || "-";
+  return customer.whatsappNumber || customer.phone || "-";
 }
 
 function getCustomerCreatedAt(customer: Customer) {
@@ -110,13 +114,13 @@ function getCustomerCreatedAt(customer: Customer) {
 
 export default function AdminCustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [search, setSearch] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(true);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
   const [verifyingId, setVerifyingId] = useState<number | null>(null);
 
-  const BASE_API_URL =
-    process.env.NEXT_PUBLIC_BASE_API_URL ||
-    "https://kantinklik.up.railway.app";
+  const BASE_API_URL = cleanBaseApiUrl(
+    process.env.NEXT_PUBLIC_BASE_API_URL || "https://kantinklik.up.railway.app"
+  );
 
   async function fetchCustomers() {
     try {
@@ -131,7 +135,12 @@ export default function AdminCustomersPage() {
         return;
       }
 
-      const res = await fetch(`${BASE_API_URL}/api/admin/customers`, {
+      const url = `${BASE_API_URL}/api/admin/customers`;
+
+      console.log("CUSTOMERS BASE API:", BASE_API_URL);
+      console.log("CUSTOMERS URL:", url);
+
+      const res = await fetch(url, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -140,10 +149,12 @@ export default function AdminCustomersPage() {
       });
 
       const data = await res.json().catch(() => null);
+
+      console.log("ADMIN CUSTOMERS STATUS:", res.status);
       console.log("ADMIN CUSTOMERS RESPONSE:", data);
 
       if (!res.ok) {
-        alert(data?.message || "Gagal mengambil data customer");
+        alert(getErrorMessage(data, "Gagal mengambil data customer"));
         setCustomers([]);
         return;
       }
@@ -383,76 +394,103 @@ export default function AdminCustomersPage() {
 
               {/* DESKTOP TABLE */}
               <div className="hidden w-full overflow-x-auto md:block">
-                <Table className="min-w-[900px]">
-                  <TableHeader>
-                    <TableRow className="bg-[#fff7f7] hover:bg-[#fff7f7]">
-                      <TableHead className="w-[60px] font-black text-[#7f1d1d]">
-                        No
-                      </TableHead>
-                      <TableHead className="font-black text-[#7f1d1d]">
-                        Nama
-                      </TableHead>
-                      <TableHead className="font-black text-[#7f1d1d]">
-                        Email
-                      </TableHead>
-                      <TableHead className="font-black text-[#7f1d1d]">
-                        No HP
-                      </TableHead>
-                      <TableHead className="font-black text-[#7f1d1d]">
-                        Verifikasi
-                      </TableHead>
-                      <TableHead className="font-black text-[#7f1d1d]">
-                        Tanggal Daftar
-                      </TableHead>
-                      <TableHead className="text-center font-black text-[#7f1d1d]">
-                        Aksi
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
+                <table className="w-full min-w-[1050px] table-fixed">
+                  <colgroup>
+                    <col className="w-[6%]" />
+                    <col className="w-[19%]" />
+                    <col className="w-[27%]" />
+                    <col className="w-[14%]" />
+                    <col className="w-[14%]" />
+                    <col className="w-[12%]" />
+                    <col className="w-[18%]" />
+                  </colgroup>
 
-                  <TableBody>
+                  <thead className="bg-[#fff7f7]">
+                    <tr>
+                      <th className="border-b border-red-100 px-4 py-4 text-left text-xs font-black uppercase tracking-widest text-[#7f1d1d]">
+                        No
+                      </th>
+                      <th className="border-b border-red-100 px-4 py-4 text-left text-xs font-black uppercase tracking-widest text-[#7f1d1d]">
+                        Nama
+                      </th>
+                      <th className="border-b border-red-100 px-4 py-4 text-left text-xs font-black uppercase tracking-widest text-[#7f1d1d]">
+                        Email
+                      </th>
+                      <th className="border-b border-red-100 px-4 py-4 text-left text-xs font-black uppercase tracking-widest text-[#7f1d1d]">
+                        No HP
+                      </th>
+                      <th className="border-b border-red-100 px-4 py-4 text-left text-xs font-black uppercase tracking-widest text-[#7f1d1d]">
+                        Verifikasi
+                      </th>
+                      <th className="border-b border-red-100 px-4 py-4 text-left text-xs font-black uppercase tracking-widest text-[#7f1d1d]">
+                        Tanggal
+                      </th>
+                      <th className="border-b border-red-100 px-4 py-4 text-center text-xs font-black uppercase tracking-widest text-[#7f1d1d]">
+                        Aksi
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
                     {filteredCustomers.map((customer, index) => {
                       const verified = isCustomerVerified(customer);
 
                       return (
-                        <TableRow
+                        <tr
                           key={customer.id}
-                          className="border-[#7f1d1d]/10 hover:bg-[#fff7f7]"
+                          className="border-b border-red-50 hover:bg-[#fff7f7]"
                         >
-                          <TableCell className="font-semibold">
+                          <td className="px-4 py-4 text-sm font-semibold text-gray-700">
                             {index + 1}
-                          </TableCell>
+                          </td>
 
-                          <TableCell className="max-w-[180px] break-words font-black text-gray-950">
-                            {customer.name || "-"}
-                          </TableCell>
+                          <td className="px-4 py-4 text-sm font-black text-gray-950">
+                            <div
+                              className="truncate"
+                              title={customer.name || "-"}
+                            >
+                              {customer.name || "-"}
+                            </div>
+                          </td>
 
-                          <TableCell className="max-w-[240px] break-words font-medium text-gray-700">
-                            {customer.email || "-"}
-                          </TableCell>
+                          <td className="px-4 py-4 text-sm font-medium text-gray-700">
+                            <div
+                              className="truncate"
+                              title={customer.email || "-"}
+                            >
+                              {customer.email || "-"}
+                            </div>
+                          </td>
 
-                          <TableCell className="font-medium text-gray-700">
-                            {getCustomerPhone(customer)}
-                          </TableCell>
+                          <td className="px-4 py-4 text-sm font-medium text-gray-700">
+                            <div
+                              className="truncate whitespace-nowrap"
+                              title={getCustomerPhone(customer)}
+                            >
+                              {getCustomerPhone(customer)}
+                            </div>
+                          </td>
 
-                          <TableCell>
+                          <td className="px-4 py-4">
                             {verified ? (
-                              <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                              <Badge className="whitespace-nowrap bg-green-100 text-green-700 hover:bg-green-100">
                                 Terverifikasi
                               </Badge>
                             ) : (
-                              <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
-                                Belum Verifikasi
+                              <Badge className="whitespace-nowrap bg-red-100 text-red-700 hover:bg-red-100">
+                                Belum
                               </Badge>
                             )}
-                          </TableCell>
+                          </td>
 
-                          <TableCell className="font-medium text-gray-700">
-                            {getCustomerCreatedAt(customer)}
-                          </TableCell>
+                          <td className="px-4 py-4 text-sm font-medium text-gray-700">
+                            <div className="whitespace-nowrap">
+                              {getCustomerCreatedAt(customer)}
+                            </div>
+                          </td>
 
-                          <TableCell>
-                            <div className="flex flex-wrap justify-center gap-2">
+                          <td className="px-4 py-4">
+                            <div className="flex flex-wrap items-center justify-center gap-2">
                               <DetailCustomer customer={customer} />
 
                               <EditCustomer
@@ -483,12 +521,12 @@ export default function AdminCustomersPage() {
                                 />
                               )}
                             </div>
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                        </tr>
                       );
                     })}
-                  </TableBody>
-                </Table>
+                  </tbody>
+                </table>
               </div>
             </>
           )}

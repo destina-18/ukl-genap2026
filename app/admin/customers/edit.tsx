@@ -21,35 +21,71 @@ type Props = {
 
 function getCookie(name: string) {
   if (typeof document === "undefined") return "";
+
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(";").shift() || "";
+
+  if (parts.length === 2) {
+    return parts.pop()?.split(";").shift() || "";
+  }
+
   return "";
+}
+
+function getErrorMessage(data: any) {
+  if (Array.isArray(data?.message)) {
+    return data.message.join("\n");
+  }
+
+  return data?.message || "Gagal edit customer";
+}
+
+function cleanBaseApiUrl(url: string) {
+  return url.replace(/\/$/, "").replace(/\/api$/, "");
 }
 
 export default function EditCustomer({ customer, baseApiUrl, onSuccess }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const [name, setName] = useState(customer.name || "");
-  const [email, setEmail] = useState(customer.email || "");
-  const [whatsappNumber, setWhatsappNumber] = useState(
-    customer.whatsappNumber || customer.phone || ""
-  );
-  const [address, setAddress] = useState(customer.address || "");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
 
-  useEffect(() => {
+  function fillForm() {
     setName(customer.name || "");
     setEmail(customer.email || "");
     setWhatsappNumber(customer.whatsappNumber || customer.phone || "");
-    setAddress(customer.address || "");
+  }
+
+  useEffect(() => {
+    fillForm();
   }, [customer]);
+
+  function handleOpen() {
+    fillForm();
+    setOpen(true);
+  }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    if (!name || !email || !whatsappNumber) {
+    const cleanName = name.trim();
+    const cleanEmail = email.trim();
+    const cleanWhatsappNumber = whatsappNumber.trim();
+
+    if (!cleanName || !cleanEmail || !cleanWhatsappNumber) {
       alert("Nama, email, dan nomor HP wajib diisi");
+      return;
+    }
+
+    if (!cleanEmail.includes("@")) {
+      alert("Format email tidak valid");
+      return;
+    }
+
+    if (cleanWhatsappNumber.length < 10) {
+      alert("Nomor HP minimal 10 digit");
       return;
     }
 
@@ -59,25 +95,37 @@ export default function EditCustomer({ customer, baseApiUrl, onSuccess }: Props)
       const token =
         getCookie("accessToken") || localStorage.getItem("accessToken");
 
-      const res = await fetch(`${baseApiUrl}/api/admin/customers/${customer.id}`, {
-        method: "PATCH",
+      if (!token) {
+        alert("Token tidak ditemukan. Silakan login ulang.");
+        return;
+      }
+
+      const cleanBaseUrl = cleanBaseApiUrl(baseApiUrl);
+      const url = `${cleanBaseUrl}/api/admin/customers/${customer.id}`;
+
+      console.log("EDIT CUSTOMER BASE URL:", cleanBaseUrl);
+      console.log("EDIT CUSTOMER URL:", url);
+
+      const res = await fetch(url, {
+        method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name,
-          email,
-          whatsappNumber,
-          address,
+          name: cleanName,
+          email: cleanEmail,
+          whatsappNumber: cleanWhatsappNumber,
         }),
       });
 
       const data = await res.json().catch(() => null);
-      console.log("EDIT CUSTOMER:", data);
+
+      console.log("EDIT CUSTOMER STATUS:", res.status);
+      console.log("EDIT CUSTOMER RESPONSE:", data);
 
       if (!res.ok) {
-        alert(data?.message || "Gagal edit customer");
+        alert(getErrorMessage(data));
         return;
       }
 
@@ -85,8 +133,8 @@ export default function EditCustomer({ customer, baseApiUrl, onSuccess }: Props)
       setOpen(false);
       onSuccess();
     } catch (error) {
-      console.error(error);
-      alert("Terjadi kesalahan saat edit customer");
+      console.error("EDIT CUSTOMER ERROR:", error);
+      alert("Gagal terhubung ke backend. Cek URL API, CORS, atau server Railway.");
     } finally {
       setLoading(false);
     }
@@ -96,8 +144,9 @@ export default function EditCustomer({ customer, baseApiUrl, onSuccess }: Props)
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
-        className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#7f1d1d]/20 text-[#7f1d1d] hover:bg-[#fff7f7]"
+        onClick={handleOpen}
+        className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#7f1d1d]/20 text-[#7f1d1d] transition hover:bg-[#fff7f7]"
+        title="Edit customer"
       >
         <Pencil className="h-4 w-4" />
       </button>
@@ -106,35 +155,62 @@ export default function EditCustomer({ customer, baseApiUrl, onSuccess }: Props)
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-xl font-black">Edit Customer</h2>
+              <h2 className="text-xl font-black text-[#2b1111]">
+                Edit Customer
+              </h2>
 
-              <button type="button" onClick={() => setOpen(false)}>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded-lg p-1 hover:bg-gray-100"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
+              <div>
+                <label className="mb-1 block text-sm font-bold text-gray-700">
+                  Nama
+                </label>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Masukkan nama customer"
+                />
+              </div>
 
-              <Input value={email} onChange={(e) => setEmail(e.target.value)} />
+              <div>
+                <label className="mb-1 block text-sm font-bold text-gray-700">
+                  Email
+                </label>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Masukkan email customer"
+                />
+              </div>
 
-              <Input
-                value={whatsappNumber}
-                onChange={(e) =>
-                  setWhatsappNumber(e.target.value.replace(/\D/g, ""))
-                }
-              />
-
-              <Input
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-              />
+              <div>
+                <label className="mb-1 block text-sm font-bold text-gray-700">
+                  Nomor HP
+                </label>
+                <Input
+                  value={whatsappNumber}
+                  onChange={(e) =>
+                    setWhatsappNumber(e.target.value.replace(/\D/g, ""))
+                  }
+                  placeholder="Masukkan nomor HP"
+                />
+              </div>
 
               <div className="flex justify-end gap-3 pt-3">
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-xl border px-4 py-2 text-sm font-bold"
+                  disabled={loading}
+                  className="rounded-xl border px-4 py-2 text-sm font-bold hover:bg-gray-50 disabled:opacity-70"
                 >
                   Batal
                 </button>
@@ -142,7 +218,7 @@ export default function EditCustomer({ customer, baseApiUrl, onSuccess }: Props)
                 <button
                   type="submit"
                   disabled={loading}
-                  className="rounded-xl bg-[#7f1d1d] px-4 py-2 text-sm font-bold text-white disabled:opacity-70"
+                  className="rounded-xl bg-[#7f1d1d] px-4 py-2 text-sm font-bold text-white hover:bg-[#681818] disabled:opacity-70"
                 >
                   {loading ? "Menyimpan..." : "Simpan"}
                 </button>
