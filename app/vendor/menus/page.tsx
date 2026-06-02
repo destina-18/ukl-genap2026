@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Camera, RefreshCcw, Utensils } from "lucide-react";
 import AddMenu from "./add";
 import EditMenu from "./edit";
 import DeleteMenu from "./delete";
 import ToggleMenuStatus from "./toggle-status";
+
+type FilterCategory = "ALL" | "MAKANAN" | "MINUMAN" | "SNACK";
 
 function getArrayFromResponse(response: any) {
   if (Array.isArray(response)) return response;
@@ -50,7 +52,14 @@ function getMenuName(menu: any) {
 }
 
 function getCategoryName(menu: any) {
-  return menu.category?.name || menu.category?.categoryName || "-";
+  return (
+    menu.category?.name ||
+    menu.category?.categoryName ||
+    menu.categoryName ||
+    menu.category_name ||
+    menu.category ||
+    "-"
+  );
 }
 
 function getImageUrl(menu: any) {
@@ -70,10 +79,126 @@ function getMenuAvailable(menu: any) {
   return Number(menu.stock || 0) > 0;
 }
 
+function getMenuFilterCategory(menu: any): "MAKANAN" | "MINUMAN" | "SNACK" {
+  const rawCategory = String(getCategoryName(menu)).toUpperCase();
+  const menuName = String(getMenuName(menu)).toLowerCase();
+
+  if (
+    rawCategory.includes("SNACK") ||
+    rawCategory.includes("JAJANAN") ||
+    rawCategory.includes("CEMILAN") ||
+    rawCategory.includes("CAMILAN")
+  ) {
+    return "SNACK";
+  }
+
+  if (
+    rawCategory.includes("MINUMAN") ||
+    rawCategory.includes("DRINK") ||
+    rawCategory.includes("BEVERAGE")
+  ) {
+    return "MINUMAN";
+  }
+
+  if (
+    rawCategory.includes("MAKANAN") ||
+    rawCategory.includes("FOOD") ||
+    rawCategory.includes("MEAL")
+  ) {
+    return "MAKANAN";
+  }
+
+  const snackKeywords = [
+    "snack",
+    "jajan",
+    "jajanan",
+    "cemilan",
+    "camilan",
+    "keripik",
+    "kripik",
+    "kentang",
+    "roti",
+    "donat",
+    "pisang",
+    "gorengan",
+    "tahu",
+    "tempe",
+    "cireng",
+    "cilok",
+    "basreng",
+    "seblak",
+    "sosis",
+    "nugget",
+    "bakwan",
+    "risol",
+    "pastel",
+    "lumpia",
+    "kue",
+  ];
+
+  const drinkKeywords = [
+    "es",
+    "teh",
+    "kopi",
+    "susu",
+    "jus",
+    "juice",
+    "air",
+    "minum",
+    "drink",
+    "latte",
+    "coklat",
+    "matcha",
+    "boba",
+    "thai tea",
+    "lemon tea",
+    "jeruk",
+    "milo",
+    "pop ice",
+    "aqua",
+  ];
+
+  const isSnack = snackKeywords.some((keyword) => menuName.includes(keyword));
+  if (isSnack) return "SNACK";
+
+  const isDrink = drinkKeywords.some((keyword) => menuName.includes(keyword));
+  if (isDrink) return "MINUMAN";
+
+  return "MAKANAN";
+}
+
+function FilterButton({
+  label,
+  value,
+  selectedCategory,
+  onClick,
+}: {
+  label: string;
+  value: FilterCategory;
+  selectedCategory: FilterCategory;
+  onClick: (value: FilterCategory) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(value)}
+      className={`rounded-full px-5 py-2 text-sm font-black transition ${
+        selectedCategory === value
+          ? "bg-[#7f1d1d] text-white shadow-md shadow-red-900/20"
+          : "border border-[#7f1d1d]/20 bg-white text-[#7f1d1d] hover:bg-[#fff7f7]"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
 export default function VendorMenusPage() {
   const [menus, setMenus] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] =
+    useState<FilterCategory>("ALL");
 
   const BASE_API_URL = process.env.NEXT_PUBLIC_BASE_API_URL;
 
@@ -140,6 +265,14 @@ export default function VendorMenusPage() {
     }
   }
 
+  const filteredMenus = useMemo(() => {
+    if (selectedCategory === "ALL") return menus;
+
+    return menus.filter((menu) => {
+      return getMenuFilterCategory(menu) === selectedCategory;
+    });
+  }, [menus, selectedCategory]);
+
   useEffect(() => {
     fetchMenus();
     fetchCategories();
@@ -186,11 +319,56 @@ export default function VendorMenusPage() {
           </div>
         </section>
 
+        <section className="mb-5 rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-4 shadow-sm md:p-5">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-lg font-black text-gray-950">
+                Filter Menu
+              </h2>
+              <p className="mt-1 text-sm text-gray-500">
+                Pilih kategori menu yang ingin ditampilkan.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <FilterButton
+                label="Semua"
+                value="ALL"
+                selectedCategory={selectedCategory}
+                onClick={setSelectedCategory}
+              />
+
+              <FilterButton
+                label="Makanan"
+                value="MAKANAN"
+                selectedCategory={selectedCategory}
+                onClick={setSelectedCategory}
+              />
+
+              <FilterButton
+                label="Minuman"
+                value="MINUMAN"
+                selectedCategory={selectedCategory}
+                onClick={setSelectedCategory}
+              />
+
+              <FilterButton
+                label="Snack"
+                value="SNACK"
+                selectedCategory={selectedCategory}
+                onClick={setSelectedCategory}
+              />
+            </div>
+          </div>
+        </section>
+
         <section className="overflow-hidden rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white shadow-xl shadow-red-900/5">
           <div className="border-b border-[#7f1d1d]/10 bg-white p-5">
             <h2 className="text-lg font-black text-gray-950">Daftar Menu</h2>
             <p className="mt-1 text-sm text-gray-500">
-              Semua menu yang dimiliki vendor.
+              {selectedCategory === "ALL"
+                ? "Semua menu yang dimiliki vendor."
+                : `Menampilkan kategori ${selectedCategory.toLowerCase()}.`}
             </p>
           </div>
 
@@ -198,15 +376,15 @@ export default function VendorMenusPage() {
             <div className="p-10 text-center text-sm font-semibold text-gray-500">
               Mengambil data menu...
             </div>
-          ) : menus.length === 0 ? (
+          ) : filteredMenus.length === 0 ? (
             <div className="p-10 text-center text-sm font-semibold text-gray-500">
-              Belum ada menu.
+              Belum ada menu di kategori ini.
             </div>
           ) : (
             <>
               {/* MOBILE CARD */}
               <div className="grid gap-4 p-4 md:hidden">
-                {menus.map((menu) => {
+                {filteredMenus.map((menu) => {
                   const available = getMenuAvailable(menu);
                   const image = getImageUrl(menu);
 
@@ -236,15 +414,21 @@ export default function VendorMenusPage() {
                               {getMenuName(menu)}
                             </h3>
 
-                            <span
-                              className={
-                                available
-                                  ? "w-fit rounded-full bg-green-100 px-3 py-1 text-[11px] font-black text-green-700"
-                                  : "w-fit rounded-full bg-red-100 px-3 py-1 text-[11px] font-black text-[#7f1d1d]"
-                              }
-                            >
-                              {available ? "Tersedia" : "Tidak tersedia"}
-                            </span>
+                            <div className="flex flex-wrap gap-2">
+                              <span className="w-fit rounded-full bg-[#7f1d1d]/10 px-3 py-1 text-[11px] font-black text-[#7f1d1d]">
+                                {getMenuFilterCategory(menu)}
+                              </span>
+
+                              <span
+                                className={
+                                  available
+                                    ? "w-fit rounded-full bg-green-100 px-3 py-1 text-[11px] font-black text-green-700"
+                                    : "w-fit rounded-full bg-red-100 px-3 py-1 text-[11px] font-black text-[#7f1d1d]"
+                                }
+                              >
+                                {available ? "Tersedia" : "Tidak tersedia"}
+                              </span>
+                            </div>
                           </div>
 
                           <p className="mt-2 line-clamp-2 text-xs leading-5 text-gray-500">
@@ -324,6 +508,9 @@ export default function VendorMenusPage() {
                       <th className="p-4 font-black text-[#7f1d1d]">
                         Kategori
                       </th>
+                      <th className="p-4 font-black text-[#7f1d1d]">
+                        Filter
+                      </th>
                       <th className="p-4 font-black text-[#7f1d1d]">Harga</th>
                       <th className="p-4 font-black text-[#7f1d1d]">Stok</th>
                       <th className="p-4 font-black text-[#7f1d1d]">
@@ -336,7 +523,7 @@ export default function VendorMenusPage() {
                   </thead>
 
                   <tbody>
-                    {menus.map((menu) => {
+                    {filteredMenus.map((menu) => {
                       const available = getMenuAvailable(menu);
                       const image = getImageUrl(menu);
 
@@ -370,6 +557,12 @@ export default function VendorMenusPage() {
 
                           <td className="p-4 font-medium text-gray-600">
                             {getCategoryName(menu)}
+                          </td>
+
+                          <td className="p-4">
+                            <span className="rounded-full bg-[#7f1d1d]/10 px-3 py-1 text-xs font-black text-[#7f1d1d]">
+                              {getMenuFilterCategory(menu)}
+                            </span>
                           </td>
 
                           <td className="p-4 font-black text-gray-800">
