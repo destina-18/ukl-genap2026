@@ -427,35 +427,26 @@ export default function VendorDashboardPage() {
     .filter((order) => isIncomeOrder(order))
     .reduce((total, order) => total + getOrderTotal(order), 0);
 
-  console.log(
-    "CEK TOTAL PER ORDER:",
-    orders.map((order) => ({
-      id: order.id,
-      status: order.status,
-      total: getOrderTotal(order),
-      order,
-    }))
-  );
-
   const latestOrders = [...orders].slice(0, 5);
 
   return (
-    <main className="min-h-screen bg-[#fff7f7] p-4 text-gray-900 md:p-8">
-      <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute left-[-120px] top-[-120px] h-[420px] w-[420px] rounded-full bg-[#7f1d1d]/20 blur-3xl" />
-        <div className="absolute right-[-140px] top-[120px] h-[480px] w-[480px] rounded-full bg-[#991b1b]/20 blur-3xl" />
+    <main className="min-h-screen overflow-x-hidden bg-[#fff7f7] px-3 py-4 text-gray-900 sm:px-5 md:px-8 md:py-8">
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute left-[-160px] top-[-160px] h-[320px] w-[320px] rounded-full bg-[#7f1d1d]/20 blur-3xl md:h-[420px] md:w-[420px]" />
+        <div className="absolute right-[-180px] top-[120px] h-[340px] w-[340px] rounded-full bg-[#991b1b]/20 blur-3xl md:h-[480px] md:w-[480px]" />
       </div>
 
-      <section className="mx-auto max-w-7xl">
-        <div className="mb-8 overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#991b1b] via-[#7f1d1d] to-[#450a0a] p-7 text-white shadow-2xl shadow-red-900/20">
-          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-bold text-red-50 backdrop-blur">
-                <Store className="h-4 w-4" />
+      <section className="mx-auto w-full max-w-7xl">
+        {/* HERO */}
+        <div className="mb-5 overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-[#991b1b] via-[#7f1d1d] to-[#450a0a] p-5 text-white shadow-2xl shadow-red-900/20 sm:p-6 md:mb-8 md:rounded-[2rem] md:p-7">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-bold text-red-50 backdrop-blur sm:text-sm">
+                <Store className="h-4 w-4 shrink-0" />
                 Vendor Panel
               </div>
 
-              <h1 className="text-3xl font-black tracking-tight md:text-4xl">
+              <h1 className="break-words text-2xl font-black tracking-tight sm:text-3xl md:text-4xl">
                 Vendor Dashboard
               </h1>
 
@@ -465,11 +456,11 @@ export default function VendorDashboardPage() {
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:w-auto">
               <button
                 onClick={fetchVendorData}
                 disabled={loading}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/15 px-5 py-3 text-sm font-black text-white backdrop-blur transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white/15 px-5 py-3 text-sm font-black text-white backdrop-blur transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-70 lg:w-auto"
               >
                 <RefreshCcw
                   size={16}
@@ -480,7 +471,7 @@ export default function VendorDashboardPage() {
 
               <Link
                 href="/vendor/menu"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-[#7f1d1d] shadow-lg transition hover:scale-105"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-[#7f1d1d] shadow-lg transition hover:scale-[1.02] lg:w-auto"
               >
                 <Plus size={18} />
                 Tambah Menu
@@ -489,7 +480,8 @@ export default function VendorDashboardPage() {
           </div>
         </div>
 
-        <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-5">
+        {/* STAT CARDS */}
+        <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:mb-8 xl:grid-cols-5">
           <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
               <Utensils size={23} />
@@ -497,7 +489,7 @@ export default function VendorDashboardPage() {
 
             <p className="text-sm font-semibold text-gray-500">Total Menu</p>
 
-            <h2 className="mt-2 text-4xl font-black text-[#7f1d1d]">
+            <h2 className="mt-2 text-3xl font-black text-[#7f1d1d] sm:text-4xl">
               {loading ? "..." : totalMenu}
             </h2>
           </div>
@@ -509,7 +501,7 @@ export default function VendorDashboardPage() {
 
             <p className="text-sm font-semibold text-gray-500">Menu Aktif</p>
 
-            <h2 className="mt-2 text-4xl font-black text-green-700">
+            <h2 className="mt-2 text-3xl font-black text-green-700 sm:text-4xl">
               {loading ? "..." : activeMenu}
             </h2>
           </div>
@@ -523,7 +515,7 @@ export default function VendorDashboardPage() {
               Pesanan Pending
             </p>
 
-            <h2 className="mt-2 text-4xl font-black text-yellow-700">
+            <h2 className="mt-2 text-3xl font-black text-yellow-700 sm:text-4xl">
               {loading ? "..." : pendingOrders}
             </h2>
           </div>
@@ -537,12 +529,12 @@ export default function VendorDashboardPage() {
               Diproses/Ready
             </p>
 
-            <h2 className="mt-2 text-4xl font-black text-blue-700">
+            <h2 className="mt-2 text-3xl font-black text-blue-700 sm:text-4xl">
               {loading ? "..." : acceptedOrders}
             </h2>
           </div>
 
-          <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
+          <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5 sm:col-span-2 xl:col-span-1">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-green-100 text-green-700">
               <CheckCircle2 size={23} />
             </div>
@@ -551,24 +543,25 @@ export default function VendorDashboardPage() {
               Order Selesai
             </p>
 
-            <h2 className="mt-2 text-4xl font-black text-green-700">
+            <h2 className="mt-2 text-3xl font-black text-green-700 sm:text-4xl">
               {loading ? "..." : completedOrders}
             </h2>
           </div>
         </div>
 
-        <div className="mb-8 rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
+        {/* INCOME */}
+        <div className="mb-5 rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5 md:mb-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
               <p className="text-sm font-semibold text-gray-500">
                 Pendapatan dari order masuk
               </p>
 
-              <h2 className="mt-2 text-3xl font-black text-[#7f1d1d]">
+              <h2 className="mt-2 break-words text-2xl font-black text-[#7f1d1d] sm:text-3xl">
                 {loading ? "..." : formatRupiah(totalIncome)}
               </h2>
 
-              <p className="mt-2 text-xs font-semibold text-gray-400">
+              <p className="mt-2 text-xs font-semibold leading-5 text-gray-400">
                 Dihitung dari semua order vendor kecuali yang ditolak,
                 dibatalkan, atau gagal.
               </p>
@@ -576,7 +569,7 @@ export default function VendorDashboardPage() {
 
             <Link
               href="/vendor/orders"
-              className="inline-flex w-fit items-center gap-2 rounded-2xl bg-[#7f1d1d] px-5 py-3 text-sm font-black text-white shadow-lg shadow-red-900/20 transition hover:bg-[#991b1b]"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#7f1d1d] px-5 py-3 text-sm font-black text-white shadow-lg shadow-red-900/20 transition hover:bg-[#991b1b] md:w-fit"
             >
               Lihat Pesanan
               <ArrowRight size={18} />
@@ -584,13 +577,14 @@ export default function VendorDashboardPage() {
           </div>
         </div>
 
-        <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+        {/* QUICK MENU */}
+        <div className="mb-5 grid grid-cols-1 gap-4 md:mb-8 md:grid-cols-3">
           <Link
             href="/vendor/menu"
-            className="group rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-6 shadow-lg shadow-red-900/5 transition hover:-translate-y-1 hover:shadow-xl"
+            className="group rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5 transition hover:-translate-y-1 hover:shadow-xl sm:p-6"
           >
             <div className="flex items-center justify-between gap-4">
-              <div>
+              <div className="min-w-0">
                 <h3 className="text-lg font-black text-gray-950">
                   Kelola Menu
                 </h3>
@@ -602,17 +596,17 @@ export default function VendorDashboardPage() {
 
               <ArrowRight
                 size={22}
-                className="text-[#7f1d1d] transition group-hover:translate-x-1"
+                className="shrink-0 text-[#7f1d1d] transition group-hover:translate-x-1"
               />
             </div>
           </Link>
 
           <Link
             href="/vendor/orders"
-            className="group rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-6 shadow-lg shadow-red-900/5 transition hover:-translate-y-1 hover:shadow-xl"
+            className="group rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5 transition hover:-translate-y-1 hover:shadow-xl sm:p-6"
           >
             <div className="flex items-center justify-between gap-4">
-              <div>
+              <div className="min-w-0">
                 <h3 className="text-lg font-black text-gray-950">Pesanan</h3>
 
                 <p className="mt-2 text-sm leading-6 text-gray-500">
@@ -622,17 +616,17 @@ export default function VendorDashboardPage() {
 
               <ArrowRight
                 size={22}
-                className="text-[#7f1d1d] transition group-hover:translate-x-1"
+                className="shrink-0 text-[#7f1d1d] transition group-hover:translate-x-1"
               />
             </div>
           </Link>
 
           <Link
             href="/vendor/profile"
-            className="group rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-6 shadow-lg shadow-red-900/5 transition hover:-translate-y-1 hover:shadow-xl"
+            className="group rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5 transition hover:-translate-y-1 hover:shadow-xl sm:p-6"
           >
             <div className="flex items-center justify-between gap-4">
-              <div>
+              <div className="min-w-0">
                 <h3 className="text-lg font-black text-gray-950">
                   Profil Vendor
                 </h3>
@@ -644,14 +638,15 @@ export default function VendorDashboardPage() {
 
               <ArrowRight
                 size={22}
-                className="text-[#7f1d1d] transition group-hover:translate-x-1"
+                className="shrink-0 text-[#7f1d1d] transition group-hover:translate-x-1"
               />
             </div>
           </Link>
         </div>
 
+        {/* LATEST ORDERS */}
         <div className="overflow-hidden rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white shadow-xl shadow-red-900/5">
-          <div className="flex items-center justify-between border-b border-[#7f1d1d]/10 bg-white p-5">
+          <div className="flex flex-col gap-3 border-b border-[#7f1d1d]/10 bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-lg font-black text-gray-950">
                 Pesanan Terbaru
@@ -664,7 +659,7 @@ export default function VendorDashboardPage() {
 
             <Link
               href="/vendor/orders"
-              className="text-sm font-black text-[#7f1d1d] hover:underline"
+              className="w-fit text-sm font-black text-[#7f1d1d] hover:underline"
             >
               Lihat semua
             </Link>
@@ -689,71 +684,137 @@ export default function VendorDashboardPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px] text-left">
-                <thead>
-                  <tr className="border-b border-[#7f1d1d]/10 bg-[#fff7f7] text-xs uppercase tracking-wide text-gray-500">
-                    <th className="px-5 py-4">Customer</th>
-                    <th className="px-5 py-4">Tanggal</th>
-                    <th className="px-5 py-4">Total</th>
-                    <th className="px-5 py-4">Status</th>
-                    <th className="px-5 py-4 text-right">Aksi</th>
-                  </tr>
-                </thead>
+            <>
+              {/* MOBILE CARD */}
+              <div className="grid gap-3 p-4 md:hidden">
+                {latestOrders.map((order, index) => {
+                  const status = getOrderStatus(order);
+                  const total = getOrderTotal(order);
 
-                <tbody>
-                  {latestOrders.map((order, index) => {
-                    const status = getOrderStatus(order);
-                    const total = getOrderTotal(order);
-
-                    return (
-                      <tr
-                        key={String(order.id || order.orderId || index)}
-                        className="border-b border-[#7f1d1d]/10 text-sm last:border-b-0"
-                      >
-                        <td className="px-5 py-4">
-                          <p className="font-black text-gray-900">
+                  return (
+                    <div
+                      key={String(order.id || order.orderId || index)}
+                      className="rounded-2xl border border-[#7f1d1d]/10 bg-[#fffafa] p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="break-words text-sm font-black text-gray-900">
                             {getCustomerName(order)}
                           </p>
 
                           <p className="mt-1 text-xs font-semibold text-gray-400">
                             Order #{order.id || order.orderId || "-"}
                           </p>
-                        </td>
+                        </div>
 
-                        <td className="px-5 py-4 font-semibold text-gray-600">
-                          {formatDate(order.createdAt || order.created_at)}
-                        </td>
+                        <span
+                          className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-black ${getStatusBadgeClass(
+                            status
+                          )}`}
+                        >
+                          {status}
+                        </span>
+                      </div>
 
-                        <td className="px-5 py-4 font-black text-[#7f1d1d]">
-                          {formatRupiah(total)}
-                        </td>
-
-                        <td className="px-5 py-4">
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-black ${getStatusBadgeClass(
-                              status
-                            )}`}
-                          >
-                            {status}
+                      <div className="mt-4 grid gap-2 text-sm">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-semibold text-gray-500">
+                            Tanggal
                           </span>
-                        </td>
+                          <span className="text-right font-bold text-gray-700">
+                            {formatDate(order.createdAt || order.created_at)}
+                          </span>
+                        </div>
 
-                        <td className="px-5 py-4 text-right">
-                          <Link
-                            href="/vendor/orders"
-                            className="inline-flex items-center gap-2 rounded-xl bg-[#7f1d1d] px-4 py-2 text-xs font-black text-white transition hover:bg-[#991b1b]"
-                          >
-                            Detail
-                            <ArrowRight size={14} />
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-semibold text-gray-500">
+                            Total
+                          </span>
+                          <span className="text-right font-black text-[#7f1d1d]">
+                            {formatRupiah(total)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <Link
+                        href="/vendor/orders"
+                        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#7f1d1d] px-4 py-2.5 text-xs font-black text-white transition hover:bg-[#991b1b]"
+                      >
+                        Detail
+                        <ArrowRight size={14} />
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* DESKTOP TABLE */}
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full min-w-[760px] text-left">
+                  <thead>
+                    <tr className="border-b border-[#7f1d1d]/10 bg-[#fff7f7] text-xs uppercase tracking-wide text-gray-500">
+                      <th className="px-5 py-4">Customer</th>
+                      <th className="px-5 py-4">Tanggal</th>
+                      <th className="px-5 py-4">Total</th>
+                      <th className="px-5 py-4">Status</th>
+                      <th className="px-5 py-4 text-right">Aksi</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {latestOrders.map((order, index) => {
+                      const status = getOrderStatus(order);
+                      const total = getOrderTotal(order);
+
+                      return (
+                        <tr
+                          key={String(order.id || order.orderId || index)}
+                          className="border-b border-[#7f1d1d]/10 text-sm last:border-b-0"
+                        >
+                          <td className="px-5 py-4">
+                            <p className="font-black text-gray-900">
+                              {getCustomerName(order)}
+                            </p>
+
+                            <p className="mt-1 text-xs font-semibold text-gray-400">
+                              Order #{order.id || order.orderId || "-"}
+                            </p>
+                          </td>
+
+                          <td className="px-5 py-4 font-semibold text-gray-600">
+                            {formatDate(order.createdAt || order.created_at)}
+                          </td>
+
+                          <td className="px-5 py-4 font-black text-[#7f1d1d]">
+                            {formatRupiah(total)}
+                          </td>
+
+                          <td className="px-5 py-4">
+                            <span
+                              className={`rounded-full px-3 py-1 text-xs font-black ${getStatusBadgeClass(
+                                status
+                              )}`}
+                            >
+                              {status}
+                            </span>
+                          </td>
+
+                          <td className="px-5 py-4 text-right">
+                            <Link
+                              href="/vendor/orders"
+                              className="inline-flex items-center gap-2 rounded-xl bg-[#7f1d1d] px-4 py-2 text-xs font-black text-white transition hover:bg-[#991b1b]"
+                            >
+                              Detail
+                              <ArrowRight size={14} />
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </section>

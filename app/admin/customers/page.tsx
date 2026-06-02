@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
 import AddCustomer from "./add";
-import EditCustomer from "./edit";
 import DeleteCustomer from "./delete";
 import ResetPasswordCustomer from "./resetpw";
 import DetailCustomer from "./detail";
@@ -196,7 +195,8 @@ export default function AdminCustomersPage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#fff7f7] px-3 py-4 text-gray-900 sm:px-5 md:px-8 md:py-8">
       <div className="mx-auto w-full max-w-7xl">
-        <section className="mb-5 rounded-3xl bg-gradient-to-br from-[#991b1b] via-[#7f1d1d] to-[#450a0a] p-5 text-white shadow-xl sm:p-7 md:mb-6">
+        {/* HEADER */}
+        <section className="mb-5 overflow-hidden rounded-3xl bg-gradient-to-br from-[#991b1b] via-[#7f1d1d] to-[#450a0a] p-5 text-white shadow-xl sm:p-7 md:mb-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
               <div className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-bold text-red-50 sm:text-sm">
@@ -208,23 +208,25 @@ export default function AdminCustomersPage() {
                 Data Customer
               </h1>
 
-              <p className="mt-2 max-w-xl text-sm leading-relaxed text-red-100">
-                Kelola data customer, tambah, edit, hapus, reset password,
-                lihat detail, dan verifikasi akun customer.
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-red-100 sm:text-base">
+                Kelola data customer, tambah, hapus, reset password, lihat
+                detail, dan verifikasi akun customer.
               </p>
             </div>
 
-            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap lg:justify-end">
-              <AddCustomer
-                baseApiUrl={BASE_API_URL}
-                onSuccess={fetchCustomers}
-              />
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap lg:w-auto lg:justify-end">
+              <div className="w-full sm:w-fit">
+                <AddCustomer
+                  baseApiUrl={BASE_API_URL}
+                  onSuccess={fetchCustomers}
+                />
+              </div>
 
               <button
                 type="button"
                 onClick={fetchCustomers}
                 disabled={loading}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-[#7f1d1d] shadow-lg transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-70 sm:w-fit"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 text-sm font-black text-[#7f1d1d] shadow-lg transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-70 sm:w-fit"
               >
                 <RefreshCcw
                   size={16}
@@ -236,8 +238,9 @@ export default function AdminCustomersPage() {
           </div>
         </section>
 
-        <section className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 md:mb-6 lg:grid-cols-3">
-          <div className="rounded-2xl bg-white p-5 shadow">
+        {/* STATS */}
+        <section className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 md:mb-6 xl:grid-cols-3">
+          <div className="rounded-3xl border border-red-100 bg-white p-5 shadow-lg shadow-red-900/5">
             <p className="text-sm font-semibold text-gray-500">
               Total Customer
             </p>
@@ -246,7 +249,7 @@ export default function AdminCustomersPage() {
             </h2>
           </div>
 
-          <div className="rounded-2xl bg-white p-5 shadow">
+          <div className="rounded-3xl border border-red-100 bg-white p-5 shadow-lg shadow-red-900/5">
             <p className="text-sm font-semibold text-gray-500">
               Terverifikasi
             </p>
@@ -255,7 +258,7 @@ export default function AdminCustomersPage() {
             </h2>
           </div>
 
-          <div className="rounded-2xl bg-white p-5 shadow sm:col-span-2 lg:col-span-1">
+          <div className="rounded-3xl border border-red-100 bg-white p-5 shadow-lg shadow-red-900/5 sm:col-span-2 xl:col-span-1">
             <p className="text-sm font-semibold text-gray-500">
               Belum Verifikasi
             </p>
@@ -265,7 +268,8 @@ export default function AdminCustomersPage() {
           </div>
         </section>
 
-        <section className="mb-5 rounded-2xl bg-white p-4 shadow">
+        {/* SEARCH */}
+        <section className="mb-5 rounded-3xl border border-red-100 bg-white p-4 shadow-lg shadow-red-900/5">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7f1d1d]" />
 
@@ -273,13 +277,14 @@ export default function AdminCustomersPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari nama, email, atau no HP..."
-              className="h-12 rounded-2xl bg-[#fff7f7] pl-11 text-sm"
+              className="h-12 rounded-2xl border-red-100 bg-[#fff7f7] pl-11 text-sm font-medium focus-visible:ring-[#7f1d1d]"
             />
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-2xl bg-white shadow">
-          <div className="border-b p-5">
+        {/* CONTENT */}
+        <section className="overflow-hidden rounded-3xl border border-red-100 bg-white shadow-xl shadow-red-900/5">
+          <div className="border-b border-red-100 p-5">
             <h2 className="text-lg font-black text-gray-950">
               Daftar Customer
             </h2>
@@ -299,71 +304,81 @@ export default function AdminCustomersPage() {
             </div>
           ) : (
             <>
-              {/* MOBILE CARD */}
-              <div className="grid gap-4 p-4 md:hidden">
+              {/* MOBILE & TABLET CARD */}
+              <div className="grid gap-4 p-4 xl:hidden">
                 {filteredCustomers.map((customer, index) => {
                   const verified = isCustomerVerified(customer);
 
                   return (
                     <div
                       key={customer.id}
-                      className="rounded-2xl border border-red-100 bg-white p-4 shadow-sm"
+                      className="rounded-3xl border border-red-100 bg-[#fffafa] p-4 shadow-sm"
                     >
-                      <div className="mb-4 flex items-start justify-between gap-3">
+                      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
-                          <p className="text-xs font-bold text-gray-400">
-                            #{index + 1}
-                          </p>
+                          <div className="mb-2 flex flex-wrap items-center gap-2">
+                            <span className="rounded-full bg-[#7f1d1d]/10 px-3 py-1 text-xs font-black text-[#7f1d1d]">
+                              #{index + 1}
+                            </span>
 
-                          <h3 className="mt-1 break-words text-lg font-black text-gray-950">
+                            {verified ? (
+                              <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                                Terverifikasi
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
+                                Belum
+                              </Badge>
+                            )}
+                          </div>
+
+                          <h3 className="break-words text-lg font-black text-gray-950">
                             {customer.name || "-"}
                           </h3>
                         </div>
-
-                        <div className="shrink-0">
-                          {verified ? (
-                            <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-                              Terverifikasi
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
-                              Belum
-                            </Badge>
-                          )}
-                        </div>
                       </div>
 
-                      <div className="space-y-3 text-sm">
-                        <div className="flex items-start gap-3">
+                      <div className="grid gap-3 text-sm md:grid-cols-2">
+                        <div className="flex items-start gap-3 rounded-2xl bg-white p-3">
                           <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[#7f1d1d]" />
-                          <p className="min-w-0 break-words font-medium text-gray-700">
-                            {customer.email || "-"}
-                          </p>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-gray-400">
+                              Email
+                            </p>
+                            <p className="break-all font-semibold text-gray-700">
+                              {customer.email || "-"}
+                            </p>
+                          </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
-                          <Phone className="h-4 w-4 shrink-0 text-[#7f1d1d]" />
-                          <p className="font-medium text-gray-700">
-                            {getCustomerPhone(customer)}
-                          </p>
+                        <div className="flex items-start gap-3 rounded-2xl bg-white p-3">
+                          <Phone className="mt-0.5 h-4 w-4 shrink-0 text-[#7f1d1d]" />
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-gray-400">
+                              No HP
+                            </p>
+                            <p className="break-all font-semibold text-gray-700">
+                              {getCustomerPhone(customer)}
+                            </p>
+                          </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
-                          <Calendar className="h-4 w-4 shrink-0 text-[#7f1d1d]" />
-                          <p className="font-medium text-gray-700">
-                            {getCustomerCreatedAt(customer)}
-                          </p>
+                        <div className="flex items-start gap-3 rounded-2xl bg-white p-3 md:col-span-2">
+                          <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-[#7f1d1d]" />
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-gray-400">
+                              Tanggal Dibuat
+                            </p>
+                            <p className="font-semibold text-gray-700">
+                              {getCustomerCreatedAt(customer)}
+                            </p>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
+                      {/* AKSI MOBILE - INI SUDAH MENYAMPING */}
+                      <div className="mt-4 flex flex-row flex-wrap items-center gap-2 border-t border-red-100 pt-4">
                         <DetailCustomer customer={customer} />
-
-                        <EditCustomer
-                          customer={customer}
-                          baseApiUrl={BASE_API_URL}
-                          onSuccess={fetchCustomers}
-                        />
 
                         <ResetPasswordCustomer
                           customerId={customer.id}
@@ -393,7 +408,7 @@ export default function AdminCustomersPage() {
               </div>
 
               {/* DESKTOP TABLE */}
-              <div className="hidden w-full overflow-x-auto md:block">
+              <div className="hidden w-full overflow-x-auto xl:block">
                 <table className="w-full min-w-[1050px] table-fixed">
                   <colgroup>
                     <col className="w-[6%]" />
@@ -410,21 +425,27 @@ export default function AdminCustomersPage() {
                       <th className="border-b border-red-100 px-4 py-4 text-left text-xs font-black uppercase tracking-widest text-[#7f1d1d]">
                         No
                       </th>
+
                       <th className="border-b border-red-100 px-4 py-4 text-left text-xs font-black uppercase tracking-widest text-[#7f1d1d]">
                         Nama
                       </th>
+
                       <th className="border-b border-red-100 px-4 py-4 text-left text-xs font-black uppercase tracking-widest text-[#7f1d1d]">
                         Email
                       </th>
+
                       <th className="border-b border-red-100 px-4 py-4 text-left text-xs font-black uppercase tracking-widest text-[#7f1d1d]">
                         No HP
                       </th>
+
                       <th className="border-b border-red-100 px-4 py-4 text-left text-xs font-black uppercase tracking-widest text-[#7f1d1d]">
                         Verifikasi
                       </th>
+
                       <th className="border-b border-red-100 px-4 py-4 text-left text-xs font-black uppercase tracking-widest text-[#7f1d1d]">
                         Tanggal
                       </th>
+
                       <th className="border-b border-red-100 px-4 py-4 text-center text-xs font-black uppercase tracking-widest text-[#7f1d1d]">
                         Aksi
                       </th>
@@ -490,14 +511,8 @@ export default function AdminCustomersPage() {
                           </td>
 
                           <td className="px-4 py-4">
-                            <div className="flex flex-wrap items-center justify-center gap-2">
+                            <div className="flex flex-row flex-wrap items-center justify-center gap-2">
                               <DetailCustomer customer={customer} />
-
-                              <EditCustomer
-                                customer={customer}
-                                baseApiUrl={BASE_API_URL}
-                                onSuccess={fetchCustomers}
-                              />
 
                               <ResetPasswordCustomer
                                 customerId={customer.id}

@@ -146,17 +146,17 @@ export default function VendorMenusPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-[#fff7f7] p-4 text-gray-900 md:p-8">
-      <div className="mx-auto max-w-7xl">
-        <section className="mb-8 overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#991b1b] via-[#7f1d1d] to-[#450a0a] p-7 text-white shadow-2xl shadow-red-900/20">
-          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-bold text-red-50 backdrop-blur">
-                <Utensils className="h-4 w-4" />
+    <main className="min-h-screen overflow-x-hidden bg-[#fff7f7] px-3 py-4 text-gray-900 sm:px-5 md:px-8 md:py-8">
+      <div className="mx-auto w-full max-w-7xl">
+        <section className="mb-5 overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-[#991b1b] via-[#7f1d1d] to-[#450a0a] p-5 text-white shadow-2xl shadow-red-900/20 sm:p-6 md:mb-8 md:rounded-[2rem] md:p-7">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-bold text-red-50 backdrop-blur sm:text-sm">
+                <Utensils className="h-4 w-4 shrink-0" />
                 Vendor Menu
               </div>
 
-              <h1 className="text-3xl font-black tracking-tight md:text-4xl">
+              <h1 className="break-words text-2xl font-black tracking-tight sm:text-3xl md:text-4xl">
                 Menu Makanan
               </h1>
 
@@ -166,13 +166,15 @@ export default function VendorMenusPage() {
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <AddMenu categories={categories} onSuccess={fetchMenus} />
+            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:w-auto">
+              <div className="w-full [&>*]:w-full">
+                <AddMenu categories={categories} onSuccess={fetchMenus} />
+              </div>
 
               <button
                 onClick={fetchMenus}
                 disabled={loading}
-                className="inline-flex w-fit items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-[#7f1d1d] shadow-lg transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-[#7f1d1d] shadow-lg transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <RefreshCcw
                   size={16}
@@ -201,106 +203,221 @@ export default function VendorMenusPage() {
               Belum ada menu.
             </div>
           ) : (
-            <div className="w-full overflow-x-auto">
-              <table className="w-full min-w-[950px] border-collapse">
-                <thead>
-                  <tr className="bg-[#fff7f7] text-left text-sm">
-                    <th className="p-4 font-black text-[#7f1d1d]">Gambar</th>
-                    <th className="p-4 font-black text-[#7f1d1d]">
-                      Nama Menu
-                    </th>
-                    <th className="p-4 font-black text-[#7f1d1d]">Kategori</th>
-                    <th className="p-4 font-black text-[#7f1d1d]">Harga</th>
-                    <th className="p-4 font-black text-[#7f1d1d]">Stok</th>
-                    <th className="p-4 font-black text-[#7f1d1d]">Status</th>
-                    <th className="p-4 text-center font-black text-[#7f1d1d]">
-                      Aksi
-                    </th>
-                  </tr>
-                </thead>
+            <>
+              {/* MOBILE CARD */}
+              <div className="grid gap-4 p-4 md:hidden">
+                {menus.map((menu) => {
+                  const available = getMenuAvailable(menu);
+                  const image = getImageUrl(menu);
 
-                <tbody>
-                  {menus.map((menu) => {
-                    const available = getMenuAvailable(menu);
-                    const image = getImageUrl(menu);
-
-                    return (
-                      <tr
-                        key={menu.id}
-                        className="border-t border-[#7f1d1d]/10 text-sm hover:bg-[#fff7f7]"
-                      >
-                        <td className="p-4">
+                  return (
+                    <div
+                      key={menu.id}
+                      className="overflow-hidden rounded-2xl border border-[#7f1d1d]/10 bg-[#fffafa] shadow-sm"
+                    >
+                      <div className="flex gap-4 p-4">
+                        <div className="shrink-0">
                           {image ? (
                             <img
                               src={image}
                               alt={getMenuName(menu)}
-                              className="h-16 w-16 rounded-2xl object-cover"
+                              className="h-20 w-20 rounded-2xl object-cover"
                             />
                           ) : (
-                            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
-                              <Camera size={22} />
+                            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
+                              <Camera size={24} />
                             </div>
                           )}
-                        </td>
+                        </div>
 
-                        <td className="p-4">
-                          <p className="font-black text-gray-950">
-                            {getMenuName(menu)}
-                          </p>
-                          <p className="mt-1 max-w-[320px] text-xs leading-5 text-gray-500">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-col gap-2">
+                            <h3 className="break-words text-base font-black text-gray-950">
+                              {getMenuName(menu)}
+                            </h3>
+
+                            <span
+                              className={
+                                available
+                                  ? "w-fit rounded-full bg-green-100 px-3 py-1 text-[11px] font-black text-green-700"
+                                  : "w-fit rounded-full bg-red-100 px-3 py-1 text-[11px] font-black text-[#7f1d1d]"
+                              }
+                            >
+                              {available ? "Tersedia" : "Tidak tersedia"}
+                            </span>
+                          </div>
+
+                          <p className="mt-2 line-clamp-2 text-xs leading-5 text-gray-500">
                             {menu.description || "-"}
                           </p>
-                        </td>
+                        </div>
+                      </div>
 
-                        <td className="p-4 font-medium text-gray-600">
-                          {getCategoryName(menu)}
-                        </td>
+                      <div className="grid grid-cols-2 gap-3 border-t border-[#7f1d1d]/10 px-4 py-3 text-sm">
+                        <div>
+                          <p className="text-xs font-semibold text-gray-400">
+                            Kategori
+                          </p>
+                          <p className="mt-1 font-bold text-gray-700">
+                            {getCategoryName(menu)}
+                          </p>
+                        </div>
 
-                        <td className="p-4 font-black text-gray-800">
-                          {formatRupiah(Number(menu.price || 0))}
-                        </td>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-400">
+                            Stok
+                          </p>
+                          <p className="mt-1 font-bold text-gray-700">
+                            {menu.stock ?? 0}
+                          </p>
+                        </div>
 
-                        <td className="p-4 font-medium text-gray-600">
-                          {menu.stock ?? 0}
-                        </td>
+                        <div className="col-span-2">
+                          <p className="text-xs font-semibold text-gray-400">
+                            Harga
+                          </p>
+                          <p className="mt-1 font-black text-[#7f1d1d]">
+                            {formatRupiah(Number(menu.price || 0))}
+                          </p>
+                        </div>
+                      </div>
 
-                        <td className="p-4">
-                          <span
-                            className={
-                              available
-                                ? "rounded-full bg-green-100 px-3 py-1 text-xs font-black text-green-700"
-                                : "rounded-full bg-red-100 px-3 py-1 text-xs font-black text-[#7f1d1d]"
-                            }
-                          >
-                            {available ? "Tersedia" : "Tidak tersedia"}
-                          </span>
-                        </td>
+                      <div className="flex flex-wrap gap-2 border-t border-[#7f1d1d]/10 p-4">
+                        <div className="w-fit">
+                          <EditMenu
+                            menu={menu}
+                            categories={categories}
+                            onSuccess={fetchMenus}
+                          />
+                        </div>
 
-                        <td className="p-4">
-                          <div className="flex justify-center gap-2">
-                            <EditMenu
-                              menu={menu}
-                              categories={categories}
-                              onSuccess={fetchMenus}
-                            />
+                        <div className="w-fit">
+                          <ToggleMenuStatus
+                            menu={menu}
+                            onSuccess={fetchMenus}
+                          />
+                        </div>
 
-                            <ToggleMenuStatus
-                              menu={menu}
-                              onSuccess={fetchMenus}
-                            />
+                        <div className="w-fit">
+                          <DeleteMenu
+                            menuId={menu.id}
+                            onSuccess={fetchMenus}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
 
-                            <DeleteMenu
-                              menuId={menu.id}
-                              onSuccess={fetchMenus}
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+              {/* DESKTOP TABLE */}
+              <div className="hidden w-full overflow-x-auto md:block">
+                <table className="w-full min-w-[900px] border-collapse">
+                  <thead>
+                    <tr className="bg-[#fff7f7] text-left text-sm">
+                      <th className="p-4 font-black text-[#7f1d1d]">
+                        Gambar
+                      </th>
+                      <th className="p-4 font-black text-[#7f1d1d]">
+                        Nama Menu
+                      </th>
+                      <th className="p-4 font-black text-[#7f1d1d]">
+                        Kategori
+                      </th>
+                      <th className="p-4 font-black text-[#7f1d1d]">Harga</th>
+                      <th className="p-4 font-black text-[#7f1d1d]">Stok</th>
+                      <th className="p-4 font-black text-[#7f1d1d]">
+                        Status
+                      </th>
+                      <th className="p-4 text-center font-black text-[#7f1d1d]">
+                        Aksi
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {menus.map((menu) => {
+                      const available = getMenuAvailable(menu);
+                      const image = getImageUrl(menu);
+
+                      return (
+                        <tr
+                          key={menu.id}
+                          className="border-t border-[#7f1d1d]/10 text-sm hover:bg-[#fff7f7]"
+                        >
+                          <td className="p-4">
+                            {image ? (
+                              <img
+                                src={image}
+                                alt={getMenuName(menu)}
+                                className="h-16 w-16 rounded-2xl object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
+                                <Camera size={22} />
+                              </div>
+                            )}
+                          </td>
+
+                          <td className="p-4">
+                            <p className="font-black text-gray-950">
+                              {getMenuName(menu)}
+                            </p>
+                            <p className="mt-1 max-w-[320px] text-xs leading-5 text-gray-500">
+                              {menu.description || "-"}
+                            </p>
+                          </td>
+
+                          <td className="p-4 font-medium text-gray-600">
+                            {getCategoryName(menu)}
+                          </td>
+
+                          <td className="p-4 font-black text-gray-800">
+                            {formatRupiah(Number(menu.price || 0))}
+                          </td>
+
+                          <td className="p-4 font-medium text-gray-600">
+                            {menu.stock ?? 0}
+                          </td>
+
+                          <td className="p-4">
+                            <span
+                              className={
+                                available
+                                  ? "rounded-full bg-green-100 px-3 py-1 text-xs font-black text-green-700"
+                                  : "rounded-full bg-red-100 px-3 py-1 text-xs font-black text-[#7f1d1d]"
+                              }
+                            >
+                              {available ? "Tersedia" : "Tidak tersedia"}
+                            </span>
+                          </td>
+
+                          <td className="p-4">
+                            <div className="flex justify-center gap-2">
+                              <EditMenu
+                                menu={menu}
+                                categories={categories}
+                                onSuccess={fetchMenus}
+                              />
+
+                              <ToggleMenuStatus
+                                menu={menu}
+                                onSuccess={fetchMenus}
+                              />
+
+                              <DeleteMenu
+                                menuId={menu.id}
+                                onSuccess={fetchMenus}
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </section>
       </div>

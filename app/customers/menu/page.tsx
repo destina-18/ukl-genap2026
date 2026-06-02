@@ -4,10 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, RefreshCcw } from "lucide-react";
 
-import VendorList, {
-  type Vendor,
-  getVendorId,
-} from "./vendor-list";
+import VendorList, { type Vendor, getVendorId } from "./vendor-list";
 
 import MenuList from "./menu-list";
 import { type Menu, getMenuId } from "./menu-card";
@@ -204,20 +201,20 @@ export default function CustomersMenuPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-[#fff7f7] px-4 py-8 text-gray-900 md:px-8">
-      <div className="mx-auto max-w-7xl">
-        <section className="mb-8 overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#991b1b] via-[#7f1d1d] to-[#450a0a] p-7 text-white shadow-2xl shadow-red-900/20 md:p-9">
-          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-            <div>
+    <main className="min-h-screen overflow-x-hidden bg-[#fff7f7] px-3 py-4 text-gray-900 sm:px-5 md:px-8 md:py-8">
+      <div className="mx-auto w-full max-w-7xl min-w-0">
+        <section className="mb-5 overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-[#991b1b] via-[#7f1d1d] to-[#450a0a] p-5 text-white shadow-2xl shadow-red-900/20 sm:p-6 md:mb-8 md:rounded-[2rem] md:p-9">
+          <div className="flex min-w-0 flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
               <Link
                 href="/customers/dashboard"
-                className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-bold text-red-50 backdrop-blur transition hover:bg-white/20"
+                className="mb-5 inline-flex max-w-full items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-bold text-red-50 backdrop-blur transition hover:bg-white/20 sm:text-sm"
               >
-                <ArrowLeft className="h-4 w-4" />
-                Kembali ke Dashboard
+                <ArrowLeft className="h-4 w-4 shrink-0" />
+                <span className="truncate">Kembali ke Dashboard</span>
               </Link>
 
-              <h1 className="text-3xl font-black tracking-tight md:text-5xl">
+              <h1 className="break-words text-2xl font-black tracking-tight sm:text-3xl md:text-5xl">
                 Menu Kantin
               </h1>
 
@@ -231,10 +228,10 @@ export default function CustomersMenuPage() {
               type="button"
               onClick={getVendors}
               disabled={loadingVendors || loadingMenus}
-              className="flex w-fit items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-[#7f1d1d] shadow-lg transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-70"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-[#7f1d1d] shadow-lg transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-70 md:w-fit"
             >
               <RefreshCcw
-                className={`h-4 w-4 ${
+                className={`h-4 w-4 shrink-0 ${
                   loadingVendors || loadingMenus ? "animate-spin" : ""
                 }`}
               />
@@ -243,22 +240,26 @@ export default function CustomersMenuPage() {
           </div>
         </section>
 
-        <section className="mb-8 grid grid-cols-1 gap-5 lg:grid-cols-[340px_1fr]">
-          <VendorList
-            vendors={vendors}
-            selectedVendorId={selectedVendorId}
-            loadingVendors={loadingVendors}
-            onSelectVendor={handleSelectVendor}
-          />
+        <section className="mb-8 grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
+          <div className="min-w-0">
+            <VendorList
+              vendors={vendors}
+              selectedVendorId={selectedVendorId}
+              loadingVendors={loadingVendors}
+              onSelectVendor={handleSelectVendor}
+            />
+          </div>
 
-          <MenuList
-            menus={filteredMenus}
-            search={search}
-            selectedVendor={selectedVendor}
-            loadingMenus={loadingMenus}
-            onSearchChange={setSearch}
-            onAddToCart={handleAddToCart}
-          />
+          <div className="min-w-0">
+            <MenuList
+              menus={filteredMenus}
+              search={search}
+              selectedVendor={selectedVendor}
+              loadingMenus={loadingMenus}
+              onSearchChange={setSearch}
+              onAddToCart={handleAddToCart}
+            />
+          </div>
         </section>
       </div>
     </main>
