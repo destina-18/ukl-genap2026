@@ -20,12 +20,16 @@ export type OrderItem = {
 
   quantity?: number | string;
   qty?: number | string;
+  amount?: number | string;
 
   price?: number | string;
   menuPrice?: number | string;
   menu_price?: number | string;
   unitPrice?: number | string;
   unit_price?: number | string;
+
+  priceSnapshot?: number | string;
+  price_snapshot?: number | string;
 
   subtotal?: number | string;
   subTotal?: number | string;
@@ -39,16 +43,62 @@ export type OrderItem = {
 
   menu?: {
     id?: number | string;
+    menuId?: number | string;
     name?: string;
+    menuName?: string;
+    menu_name?: string;
+    title?: string;
     price?: number | string;
-    imageUrl?: string;
-    image?: string;
   };
+
+  Menu?: {
+    id?: number | string;
+    menuId?: number | string;
+    name?: string;
+    menuName?: string;
+    menu_name?: string;
+    title?: string;
+    price?: number | string;
+  };
+
+  product?: {
+    name?: string;
+    title?: string;
+    price?: number | string;
+  };
+
+  food?: {
+    name?: string;
+    title?: string;
+    price?: number | string;
+  };
+
+  cartItem?: {
+    menu?: {
+      name?: string;
+      menuName?: string;
+      menu_name?: string;
+      title?: string;
+      price?: number | string;
+    };
+  };
+
+  menuNameSnapshot?: string;
+  menu_name_snapshot?: string;
 
   menuName?: string;
   menu_name?: string;
   name?: string;
+  title?: string;
+  productName?: string;
+  product_name?: string;
+  foodName?: string;
+  food_name?: string;
+  itemName?: string;
+  item_name?: string;
+
   menuId?: number | string;
+  menu_id?: number | string;
 
   [key: string]: any;
 };
@@ -56,9 +106,19 @@ export type OrderItem = {
 export type Order = {
   id?: number | string;
   orderId?: number | string;
+  order_id?: number | string;
+  orderCode?: string;
+  order_code?: string;
+
   status?: string;
   paymentMethod?: string;
   payment_method?: string;
+  paymentStatus?: string;
+  payment_status?: string;
+
+  subtotal?: number | string;
+  subTotal?: number | string;
+  sub_total?: number | string;
 
   totalPrice?: number | string;
   total_price?: number | string;
@@ -67,6 +127,9 @@ export type Order = {
   grandTotal?: number | string;
   grand_total?: number | string;
   total?: number | string;
+
+  rejectionReason?: string;
+  rejection_reason?: string;
 
   createdAt?: string;
   created_at?: string;
@@ -77,7 +140,14 @@ export type Order = {
     canteenName?: string;
     canteen_name?: string;
     name?: string;
+    vendorName?: string;
+    vendor_name?: string;
   };
+
+  canteenName?: string;
+  canteen_name?: string;
+  vendorName?: string;
+  vendor_name?: string;
 
   items?: OrderItem[];
   orderItems?: OrderItem[];
@@ -98,7 +168,11 @@ type OrderCardProps = {
 };
 
 export function getOrderId(order: Order) {
-  return order.id || order.orderId;
+  return order.id || order.orderId || order.order_id;
+}
+
+function getOrderCode(order: Order) {
+  return order.orderCode || order.order_code || getOrderId(order);
 }
 
 function getOrderItemId(item: OrderItem) {
@@ -117,18 +191,63 @@ function getOrderItems(order: Order) {
   );
 }
 
+function toNumber(value: any) {
+  const numberValue = Number(value);
+  return Number.isNaN(numberValue) ? 0 : numberValue;
+}
+
+function getItemName(item: OrderItem, index: number) {
+  return (
+    item.menuNameSnapshot ||
+    item.menu_name_snapshot ||
+    item.menu?.name ||
+    item.menu?.menuName ||
+    item.menu?.menu_name ||
+    item.menu?.title ||
+    item.Menu?.name ||
+    item.Menu?.menuName ||
+    item.Menu?.menu_name ||
+    item.Menu?.title ||
+    item.product?.name ||
+    item.product?.title ||
+    item.food?.name ||
+    item.food?.title ||
+    item.cartItem?.menu?.name ||
+    item.cartItem?.menu?.menuName ||
+    item.cartItem?.menu?.menu_name ||
+    item.cartItem?.menu?.title ||
+    item.menuName ||
+    item.menu_name ||
+    item.name ||
+    item.title ||
+    item.productName ||
+    item.product_name ||
+    item.foodName ||
+    item.food_name ||
+    item.itemName ||
+    item.item_name ||
+    `Menu ${index + 1}`
+  );
+}
+
 function getItemQuantity(item: OrderItem) {
-  return Number(item.quantity || item.qty || 1);
+  return toNumber(item.quantity || item.qty || item.amount || 1);
 }
 
 function getItemPrice(item: OrderItem) {
-  return Number(
-    item.price ||
+  return toNumber(
+    item.priceSnapshot ||
+      item.price_snapshot ||
+      item.price ||
       item.menuPrice ||
       item.menu_price ||
       item.unitPrice ||
       item.unit_price ||
       item.menu?.price ||
+      item.Menu?.price ||
+      item.product?.price ||
+      item.food?.price ||
+      item.cartItem?.menu?.price ||
       0
   );
 }
@@ -137,7 +256,7 @@ function getItemSubtotal(item: OrderItem) {
   const quantity = getItemQuantity(item);
   const price = getItemPrice(item);
 
-  return Number(
+  return toNumber(
     item.subtotal ||
       item.subTotal ||
       item.sub_total ||
@@ -156,17 +275,25 @@ function getOrderTotal(order: Order) {
     return sum + getItemSubtotal(item);
   }, 0);
 
-  return Number(
-    order.totalPrice ||
-      order.total_price ||
-      order.totalAmount ||
+  const totalFromOrder = toNumber(
+    order.totalAmount ||
       order.total_amount ||
+      order.totalPrice ||
+      order.total_price ||
       order.grandTotal ||
       order.grand_total ||
       order.total ||
-      totalFromItems ||
       0
   );
+
+  const subtotalFromOrder = toNumber(
+    order.subtotal || order.subTotal || order.sub_total || 0
+  );
+
+  if (totalFromOrder > 0) return totalFromOrder;
+  if (subtotalFromOrder > 0) return subtotalFromOrder;
+
+  return totalFromItems;
 }
 
 function getVendorName(order: Order) {
@@ -174,6 +301,8 @@ function getVendorName(order: Order) {
     order.vendor?.canteenName ||
     order.vendor?.canteen_name ||
     order.vendor?.name ||
+    order.vendor?.vendorName ||
+    order.vendor?.vendor_name ||
     order.canteenName ||
     order.canteen_name ||
     order.vendorName ||
@@ -277,6 +406,7 @@ export default function OrderCard({
   onRefresh,
 }: OrderCardProps) {
   const orderId = getOrderId(order);
+  const orderCode = getOrderCode(order);
   const statusInfo = getStatusStyle(order.status);
   const StatusIcon = statusInfo.icon;
   const items = getOrderItems(order);
@@ -292,7 +422,7 @@ export default function OrderCard({
           <div>
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-[#7f1d1d]/10 px-3 py-1 text-xs font-black text-[#7f1d1d]">
-                Order #{orderId}
+                Order #{orderCode}
               </span>
 
               <span
@@ -310,18 +440,22 @@ export default function OrderCard({
             <p className="mt-1 text-sm text-gray-500">
               Dibuat: {formatDate(order.createdAt || order.created_at)}
             </p>
+
+            {(order.rejectionReason || order.rejection_reason) && (
+              <p className="mt-2 rounded-xl bg-red-50 px-3 py-2 text-sm font-bold text-red-700">
+                Alasan ditolak: {order.rejectionReason || order.rejection_reason}
+              </p>
+            )}
           </div>
 
           <div className="text-left md:text-right">
-            <p className="text-sm font-bold text-gray-500">
-              Total Pembayaran
-            </p>
+            <p className="text-sm font-bold text-gray-500">Total Pembayaran</p>
 
             <p className="text-2xl font-black text-[#7f1d1d]">
               {formatRupiah(getOrderTotal(order))}
             </p>
 
-            <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-black text-gray-600">
+            <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-black uppercase text-gray-600">
               <Wallet className="h-3 w-3" />
               {order.paymentMethod || order.payment_method || "-"}
             </div>
@@ -343,14 +477,7 @@ export default function OrderCard({
           <div className="space-y-3">
             {items.map((item, index) => {
               const itemId = getOrderItemId(item);
-
-              const menuName =
-                item.menu?.name ||
-                item.menuName ||
-                item.menu_name ||
-                item.name ||
-                `Menu ${index + 1}`;
-
+              const menuName = getItemName(item, index);
               const quantity = getItemQuantity(item);
               const price = getItemPrice(item);
               const subtotal = getItemSubtotal(item);
@@ -363,12 +490,13 @@ export default function OrderCard({
                 >
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
                         <Utensils className="h-5 w-5" />
                       </div>
 
                       <div>
                         <p className="font-black text-gray-950">{menuName}</p>
+
                         <p className="text-sm text-gray-500">
                           {quantity} x {formatRupiah(price)}
                         </p>
@@ -405,7 +533,9 @@ export default function OrderCard({
           {canCancel && (
             <button
               type="button"
-              onClick={() => onCancelOrder(String(orderId))}
+              onClick={() => {
+                if (orderId) onCancelOrder(orderId);
+              }}
               disabled={cancelLoadingId === String(orderId)}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-50 px-5 py-3 text-sm font-black text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-70"
             >

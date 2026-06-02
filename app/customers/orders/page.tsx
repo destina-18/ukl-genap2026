@@ -52,6 +52,53 @@ function getArrayFromResponse(response: any): Order[] {
   return [];
 }
 
+function getOrderItemsForDebug(order: any) {
+  return (
+    order?.items ||
+    order?.orderItems ||
+    order?.order_items ||
+    order?.details ||
+    order?.orderDetails ||
+    order?.order_details ||
+    []
+  );
+}
+
+function debugOrders(orders: Order[]) {
+  console.log("CUSTOMER ORDERS NORMALIZED:", JSON.stringify(orders, null, 2));
+
+  orders.forEach((order: any, orderIndex) => {
+    const items = getOrderItemsForDebug(order);
+
+    console.log(`ORDER ${orderIndex + 1} DATA:`, JSON.stringify(order, null, 2));
+    console.log(
+      `ORDER ${orderIndex + 1} ITEMS:`,
+      JSON.stringify(items, null, 2)
+    );
+
+    items.forEach((item: any, itemIndex: number) => {
+      console.log(
+        `ORDER ${orderIndex + 1} - ITEM ${itemIndex + 1}:`,
+        JSON.stringify(item, null, 2)
+      );
+
+      console.log(`CEK NAMA MENU ITEM ${itemIndex + 1}:`, {
+        "item.menu?.name": item?.menu?.name,
+        "item.Menu?.name": item?.Menu?.name,
+        "item.menuName": item?.menuName,
+        "item.menu_name": item?.menu_name,
+        "item.name": item?.name,
+        "item.title": item?.title,
+        "item.product?.name": item?.product?.name,
+        "item.food?.name": item?.food?.name,
+        "item.cartItem?.menu?.name": item?.cartItem?.menu?.name,
+        "item.menuId": item?.menuId,
+        "item.menu_id": item?.menu_id,
+      });
+    });
+  });
+}
+
 export default function CustomersOrdersPage() {
   const BASE_API_URL =
     process.env.NEXT_PUBLIC_BASE_API_URL || "https://kantinklik.up.railway.app";
@@ -59,6 +106,7 @@ export default function CustomersOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancelLoadingId, setCancelLoadingId] = useState<string>("");
+
   const [orderUpdateNotification, setOrderUpdateNotification] = useState<{
     orderId: number;
     status: string;
@@ -90,7 +138,7 @@ export default function CustomersOrdersPage() {
       const data = await response.json().catch(() => null);
 
       console.log("CUSTOMER ORDERS STATUS:", response.status);
-      console.log("CUSTOMER ORDERS RESPONSE:", data);
+      console.log("CUSTOMER ORDERS RAW:", JSON.stringify(data, null, 2));
 
       if (!response.ok) {
         alert(data?.message || "Gagal mengambil data pesanan");
@@ -98,7 +146,11 @@ export default function CustomersOrdersPage() {
         return;
       }
 
-      setOrders(getArrayFromResponse(data));
+      const normalizedOrders = getArrayFromResponse(data);
+
+      debugOrders(normalizedOrders);
+
+      setOrders(normalizedOrders);
     } catch (error) {
       console.error("GET ORDERS ERROR:", error);
       alert("Gagal terhubung ke server saat mengambil pesanan");
@@ -137,7 +189,7 @@ export default function CustomersOrdersPage() {
       const data = await response.json().catch(() => null);
 
       console.log("CANCEL ORDER STATUS:", response.status);
-      console.log("CANCEL ORDER RESPONSE:", data);
+      console.log("CANCEL ORDER RESPONSE:", JSON.stringify(data, null, 2));
 
       if (!response.ok) {
         alert(data?.message || "Gagal membatalkan pesanan");
@@ -157,7 +209,7 @@ export default function CustomersOrdersPage() {
   useEffect(() => {
     getOrders();
   }, []);
-  // Setup WebSocket connection to listen for order status updates
+
   useEffect(() => {
     if (!socket) return;
 
@@ -168,18 +220,25 @@ export default function CustomersOrdersPage() {
       (data: { orderId: number; status: string; message: string }) => {
         console.log("[WebSocket] Event orderUpdate diterima:", data);
 
-        // Play chime tone safely with Autoplay handling
         try {
-          const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+          const AudioContext =
+            window.AudioContext || (window as any).webkitAudioContext;
+
           if (AudioContext) {
             const ctx = new AudioContext();
+
             if (ctx.state !== "suspended") {
               const osc1 = ctx.createOscillator();
               const gain1 = ctx.createGain();
+
               osc1.type = "sine";
               osc1.frequency.setValueAtTime(523.25, ctx.currentTime);
               gain1.gain.setValueAtTime(0.08, ctx.currentTime);
-              gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+              gain1.gain.exponentialRampToValueAtTime(
+                0.01,
+                ctx.currentTime + 0.3
+              );
+
               osc1.connect(gain1);
               gain1.connect(ctx.destination);
               osc1.start();
@@ -189,39 +248,46 @@ export default function CustomersOrdersPage() {
                 try {
                   const osc2 = ctx.createOscillator();
                   const gain2 = ctx.createGain();
+
                   osc2.type = "sine";
                   osc2.frequency.setValueAtTime(659.25, ctx.currentTime);
                   gain2.gain.setValueAtTime(0.1, ctx.currentTime);
-                  gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+                  gain2.gain.exponentialRampToValueAtTime(
+                    0.01,
+                    ctx.currentTime + 0.4
+                  );
+
                   osc2.connect(gain2);
                   gain2.connect(ctx.destination);
                   osc2.start();
                   osc2.stop(ctx.currentTime + 0.4);
-                } catch (err) { }
+                } catch (err) {
+                  console.warn("Gagal memutar suara kedua:", err);
+                }
               }, 100);
             }
           }
-        } catch (e) {
-          console.warn("Autoplay audio blocked or failed:", e);
+        } catch (error) {
+          console.warn("Autoplay audio blocked or failed:", error);
         }
 
-        // 1. Update status pesanan di local state secara instan!
         setOrders((prevOrders) =>
           prevOrders.map((order) => {
-            const currentId = order.id || order.orderId;
+            const currentId = order.id || order.orderId || order.order_id;
+
             if (Number(currentId) === Number(data.orderId)) {
               return {
                 ...order,
                 status: data.status,
               };
             }
+
             return order;
           })
         );
 
         setOrderUpdateNotification(data);
 
-        // 2. Refresh data lengkap dari API di background secara silent
         getOrders(true);
       }
     );
@@ -230,9 +296,9 @@ export default function CustomersOrdersPage() {
       socket.off("orderUpdate");
     };
   }, [socket]);
+
   return (
-    <main className="min-h-screen bg-[#fff7f7] px-4 py-8 text-gray-900 md:px-8 relative">
-      {/* Floating Real-time Notification */}
+    <main className="relative min-h-screen bg-[#fff7f7] px-4 py-8 text-gray-900 md:px-8">
       {orderUpdateNotification && (
         <div className="fixed bottom-6 right-6 z-50 max-w-sm animate-bounce rounded-2xl border border-red-500/20 bg-gradient-to-r from-red-800 to-red-950 p-5 text-white shadow-2xl shadow-red-900/30 backdrop-blur-xl">
           <div className="flex items-start gap-4">
@@ -240,9 +306,16 @@ export default function CustomersOrdersPage() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
               <Bell className="h-5 w-5 text-red-100" />
             </div>
+
             <div className="flex-1">
-              <h4 className="font-extrabold tracking-tight text-white">Status Pesanan Diperbarui!</h4>
-              <p className="mt-1 text-xs text-red-200 leading-snug">{orderUpdateNotification.message}</p>
+              <h4 className="font-extrabold tracking-tight text-white">
+                Status Pesanan Diperbarui!
+              </h4>
+
+              <p className="mt-1 text-xs leading-snug text-red-200">
+                {orderUpdateNotification.message}
+              </p>
+
               <div className="mt-3 flex gap-2">
                 <button
                   type="button"
@@ -253,6 +326,7 @@ export default function CustomersOrdersPage() {
                 >
                   Tutup
                 </button>
+
                 <button
                   type="button"
                   onClick={() => {
@@ -281,9 +355,18 @@ export default function CustomersOrdersPage() {
                 Kembali ke Dashboard
               </Link>
 
-              <h1 className="text-3xl font-black tracking-tight md:text-5xl flex items-center gap-3">
+              <h1 className="flex items-center gap-3 text-3xl font-black tracking-tight md:text-5xl">
                 Pesanan Saya
-                <span className={`inline-flex h-3.5 w-3.5 rounded-full ${isConnected ? "bg-green-400 animate-pulse" : "bg-red-400"}`} title={isConnected ? "WebSocket Terhubung" : "WebSocket Terputus"} />
+                <span
+                  className={`inline-flex h-3.5 w-3.5 rounded-full ${
+                    isConnected ? "animate-pulse bg-green-400" : "bg-red-400"
+                  }`}
+                  title={
+                    isConnected
+                      ? "WebSocket Terhubung"
+                      : "WebSocket Terputus"
+                  }
+                />
               </h1>
 
               <p className="mt-3 max-w-xl text-sm leading-6 text-red-100 md:text-base">
@@ -312,6 +395,7 @@ export default function CustomersOrdersPage() {
           <section className="flex min-h-[300px] items-center justify-center rounded-[1.5rem] bg-white shadow-lg shadow-red-900/5">
             <div className="text-center">
               <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-[#7f1d1d]/20 border-t-[#7f1d1d]" />
+
               <p className="text-sm font-bold text-[#7f1d1d]">
                 Memuat pesanan...
               </p>
@@ -323,7 +407,7 @@ export default function CustomersOrdersPage() {
           <section className="space-y-5">
             {orders.map((order, index) => (
               <OrderCard
-                key={String(order.id || order.orderId || index)}
+                key={String(order.id || order.orderId || order.order_id || index)}
                 order={order}
                 cancelLoadingId={cancelLoadingId}
                 baseApiUrl={BASE_API_URL}
