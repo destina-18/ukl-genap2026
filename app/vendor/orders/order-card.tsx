@@ -1,3 +1,5 @@
+"use client";
+
 import {
   CheckCircle2,
   ShoppingBag,
@@ -9,8 +11,10 @@ import {
 import {
   formatDate,
   formatRupiah,
+  getCustomerEmail,
   getCustomerName,
   getCustomerWhatsapp,
+  getItemMenuName,
   getItemPrice,
   getItemQuantity,
   getItemSubtotal,
@@ -22,7 +26,7 @@ import {
   type Order,
 } from "./order-helpers";
 
-type Props = {
+type OrderCardProps = {
   order: Order;
   actionLoading: string;
   updateOrderStatus: (orderId: number | string, action: string) => void;
@@ -32,7 +36,7 @@ export default function OrderCard({
   order,
   actionLoading,
   updateOrderStatus,
-}: Props) {
+}: OrderCardProps) {
   const orderId = getOrderId(order);
   const status = getOrderStatus(order);
   const statusInfo = getStatusStyle(status);
@@ -69,9 +73,9 @@ export default function OrderCard({
               Dibuat: {formatDate(order.createdAt || order.created_at)}
             </p>
 
-            {order.customer?.email && (
+            {getCustomerEmail(order) && (
               <p className="mt-1 text-sm text-gray-500">
-                {order.customer.email}
+                {getCustomerEmail(order)}
               </p>
             )}
 
@@ -110,20 +114,16 @@ export default function OrderCard({
         ) : (
           <div className="space-y-3">
             {items.map((item, index) => {
-              const menuName =
-                item.menu?.name ||
-                item.menuName ||
-                item.menu_name ||
-                item.name ||
-                `Menu ${index + 1}`;
+              console.log("ITEM ORDER:", item);
 
+              const menuName = getItemMenuName(item, index);
               const quantity = getItemQuantity(item);
               const price = getItemPrice(item);
               const subtotal = getItemSubtotal(item);
 
               return (
                 <div
-                  key={String(item.id || index)}
+                  key={String(item?.id || item?.menuId || item?.menu_id || index)}
                   className="flex items-center justify-between gap-4 rounded-2xl border border-[#7f1d1d]/10 p-4"
                 >
                   <div className="flex items-center gap-3">
@@ -153,7 +153,8 @@ export default function OrderCard({
           {canAcceptReject && (
             <>
               <button
-                onClick={() => updateOrderStatus(String(orderId), "reject")}
+                type="button"
+                onClick={() => updateOrderStatus(orderId, "reject")}
                 disabled={actionLoading === `${orderId}-reject`}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-50 px-5 py-3 text-sm font-black text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-70"
               >
@@ -164,7 +165,8 @@ export default function OrderCard({
               </button>
 
               <button
-                onClick={() => updateOrderStatus(String(orderId), "accept")}
+                type="button"
+                onClick={() => updateOrderStatus(orderId, "accept")}
                 disabled={actionLoading === `${orderId}-accept`}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-50 px-5 py-3 text-sm font-black text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-70"
               >
@@ -178,7 +180,8 @@ export default function OrderCard({
 
           {canReady && (
             <button
-              onClick={() => updateOrderStatus(String(orderId), "ready")}
+              type="button"
+              onClick={() => updateOrderStatus(orderId, "ready")}
               disabled={actionLoading === `${orderId}-ready`}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-purple-50 px-5 py-3 text-sm font-black text-purple-700 transition hover:bg-purple-100 disabled:cursor-not-allowed disabled:opacity-70"
             >
@@ -191,7 +194,8 @@ export default function OrderCard({
 
           {canComplete && (
             <button
-              onClick={() => updateOrderStatus(String(orderId), "complete")}
+              type="button"
+              onClick={() => updateOrderStatus(orderId, "complete")}
               disabled={actionLoading === `${orderId}-complete`}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-green-50 px-5 py-3 text-sm font-black text-green-700 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-70"
             >

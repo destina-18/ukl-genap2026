@@ -6,7 +6,6 @@ import {
   Store,
   Users,
   RefreshCcw,
-  ShoppingBag,
   Utensils,
   ShieldCheck,
   ArrowRight,
@@ -48,30 +47,96 @@ function getArrayFromResponse(response: any) {
   if (Array.isArray(response?.users)) return response.users;
   if (Array.isArray(response?.data?.users)) return response.data.users;
 
-  if (Array.isArray(response?.result)) return response.result;
   if (Array.isArray(response?.items)) return response.items;
+  if (Array.isArray(response?.data?.items)) return response.data.items;
+
+  if (Array.isArray(response?.result)) return response.result;
+  if (Array.isArray(response?.data?.result)) return response.data.result;
 
   return [];
+}
+
+function getMenuCountFromVendors(vendors: Vendor[]) {
+  return vendors.reduce((total, vendor) => {
+    const countMenus =
+      vendor?._count?.menus ??
+      vendor?._count?.Menus ??
+      vendor?.menuCount ??
+      vendor?.menusCount ??
+      vendor?.totalMenu ??
+      vendor?.totalMenus ??
+      vendor?.total_menu ??
+      vendor?.total_menus ??
+      (Array.isArray(vendor?.menus) ? vendor.menus.length : 0) ??
+      (Array.isArray(vendor?.Menus) ? vendor.Menus.length : 0);
+
+    return total + Number(countMenus || 0);
+  }, 0);
 }
 
 export default function AdminDashboardPage() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [totalMenus, setTotalMenus] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  const BASE_API_URL =
+    process.env.NEXT_PUBLIC_BASE_API_URL ||
+    "https://kantinklik.up.railway.app";
 
   async function getDashboardData() {
     try {
       setLoading(true);
 
-      const token = getCookie("accessToken");
+      const token =
+        getCookie("accessToken") || localStorage.getItem("accessToken");
+
+      if (!token) {
+        console.log("TOKEN TIDAK ADA");
+        setVendors([]);
+        setCustomers([]);
+        setTotalMenus(0);
+        return;
+      }
 
       const headers = {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       };
 
-      const vendorResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/vendors`,
+      // =========================
+      // AMBIL TOTAL VENDOR + TOTAL MENU DARI DATA VENDOR
+      // =========================
+      const vendorResponse = await fetch(`${BASE_API_URL}/api/vendors`, {
+        method: "GET",
+        headers,
+        cache: "no-store",
+      });
+
+      const vendorResult = await vendorResponse.json().catch(() => null);
+      console.log("DASHBOARD VENDOR RESPONSE:", vendorResult);
+
+      if (vendorResponse.ok) {
+        const vendorArray = getArrayFromResponse(vendorResult);
+
+        setVendors(vendorArray);
+
+        const menuCount = getMenuCountFromVendors(vendorArray);
+        setTotalMenus(menuCount);
+
+        console.log("TOTAL MENU DARI DATA VENDOR:", menuCount);
+        console.log("VENDOR ARRAY:", vendorArray);
+      } else {
+        console.log("GAGAL AMBIL VENDOR:", vendorResult);
+        setVendors([]);
+        setTotalMenus(0);
+      }
+
+      // =========================
+      // AMBIL TOTAL CUSTOMER
+      // =========================
+      const customerResponse = await fetch(
+        `${BASE_API_URL}/api/admin/customers`,
         {
           method: "GET",
           headers,
@@ -79,43 +144,20 @@ export default function AdminDashboardPage() {
         }
       );
 
-      const vendorResult = await vendorResponse.json();
-      console.log("DASHBOARD VENDOR RESPONSE:", vendorResult);
+      const customerResult = await customerResponse.json().catch(() => null);
+      console.log("DASHBOARD CUSTOMER RESPONSE:", customerResult);
 
-      if (vendorResponse.ok) {
-        setVendors(getArrayFromResponse(vendorResult));
+      if (customerResponse.ok) {
+        setCustomers(getArrayFromResponse(customerResult));
       } else {
-        console.log("GAGAL AMBIL VENDOR:", vendorResult);
-        setVendors([]);
-      }
-
-      try {
-        const customerResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/customers`,
-          {
-            method: "GET",
-            headers,
-            cache: "no-store",
-          }
-        );
-
-        const customerResult = await customerResponse.json();
-        console.log("DASHBOARD CUSTOMER RESPONSE:", customerResult);
-
-        if (customerResponse.ok) {
-          setCustomers(getArrayFromResponse(customerResult));
-        } else {
-          console.log("GAGAL AMBIL CUSTOMER:", customerResult);
-          setCustomers([]);
-        }
-      } catch (error) {
-        console.log("CUSTOMER ENDPOINT ERROR:", error);
+        console.log("GAGAL AMBIL CUSTOMER:", customerResult);
         setCustomers([]);
       }
     } catch (error) {
       console.error("ERROR DASHBOARD:", error);
       setVendors([]);
       setCustomers([]);
+      setTotalMenus(0);
     } finally {
       setLoading(false);
     }
@@ -146,12 +188,13 @@ export default function AdminDashboardPage() {
               </h1>
 
               <p className="mt-2 max-w-xl text-sm leading-6 text-red-100">
-                Ringkasan data KantinKlik untuk memantau vendor, customer,
-                menu, dan aktivitas sistem.
+                Ringkasan data KantinKlik untuk memantau vendor, customer, dan
+                menu.
               </p>
             </div>
 
             <button
+              type="button"
               onClick={getDashboardData}
               disabled={loading}
               className="flex w-fit items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-[#7f1d1d] shadow-lg transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-70"
@@ -162,12 +205,14 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
               <Store size={23} />
             </div>
+
             <p className="text-sm font-semibold text-gray-500">Total Vendor</p>
+
             <h2 className="mt-2 text-4xl font-black text-[#7f1d1d]">
               {loading ? "..." : vendors.length}
             </h2>
@@ -177,7 +222,11 @@ export default function AdminDashboardPage() {
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
               <Users size={23} />
             </div>
-            <p className="text-sm font-semibold text-gray-500">Total Customer</p>
+
+            <p className="text-sm font-semibold text-gray-500">
+              Total Customer
+            </p>
+
             <h2 className="mt-2 text-4xl font-black text-[#7f1d1d]">
               {loading ? "..." : customers.length}
             </h2>
@@ -187,16 +236,12 @@ export default function AdminDashboardPage() {
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
               <Utensils size={23} />
             </div>
-            <p className="text-sm font-semibold text-gray-500">Total Menu</p>
-            <h2 className="mt-2 text-4xl font-black text-[#7f1d1d]">0</h2>
-          </div>
 
-          <div className="rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
-              <ShoppingBag size={23} />
-            </div>
-            <p className="text-sm font-semibold text-gray-500">Total Order</p>
-            <h2 className="mt-2 text-4xl font-black text-[#7f1d1d]">0</h2>
+            <p className="text-sm font-semibold text-gray-500">Total Menu</p>
+
+            <h2 className="mt-2 text-4xl font-black text-[#7f1d1d]">
+              {loading ? "..." : totalMenus}
+            </h2>
           </div>
         </div>
 
@@ -246,10 +291,10 @@ export default function AdminDashboardPage() {
               <Utensils size={25} />
             </div>
 
-            <h3 className="text-lg font-black text-gray-950">Menu & Order</h3>
+            <h3 className="text-lg font-black text-gray-950">Data Menu</h3>
 
             <p className="mt-2 text-sm leading-6 text-gray-500">
-              Data menu dan order belum disambungkan ke dashboard admin.
+              Total menu dihitung dari data vendor yang dikirim oleh backend.
             </p>
           </div>
         </div>
