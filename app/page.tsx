@@ -328,7 +328,8 @@ export default function Home() {
       {/* CARA KERJA */}
       <section className="px-6 py-20 md:px-16 bg-white">
         <div className="mx-auto max-w-7xl">
-          <p className="text-sm font-black uppercase tracking-[0.25em] text-[#7f1d1d]">
+          <FadeIn delay={0}>
+            <p className="text-sm font-black uppercase tracking-[0.25em] text-[#7f1d1d]">
             Cara Kerja
           </p>
           <h2 className="mt-4 text-4xl font-black text-gray-950">
@@ -337,8 +338,10 @@ export default function Home() {
               selesai.
             </span>
           </h2>
+          </FadeIn>
 
-          <div className="mt-12 grid gap-6 sm:grid-cols-3">
+          <FadeIn delay={50}>
+            <div className="mt-12 grid gap-6 sm:grid-cols-3">
             {[
               {
                 step: "01",
@@ -374,6 +377,7 @@ export default function Home() {
               </div>
             ))}
           </div>
+          </FadeIn>
         </div>
       </section>
 
