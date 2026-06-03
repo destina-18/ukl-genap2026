@@ -182,6 +182,7 @@ export default function Home() {
           transform: "rotate(-15deg)",
           zIndex: 0,
           pointerEvents: "none",
+          animation: "gridMove 10s linear infinite",
         }}
       />
 

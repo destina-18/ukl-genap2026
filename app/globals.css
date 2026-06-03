@@ -120,6 +120,15 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+@keyframes gridMove {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 96px 96px;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
