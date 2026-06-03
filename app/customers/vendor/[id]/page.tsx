@@ -676,18 +676,7 @@ export default function CustomerVendorDetailPage() {
                         <StarDisplay value={getRatingValue(item)} />
                       </div>
 
-                      <div className="mt-4 rounded-2xl bg-white p-4">
-                        <div className="mb-3 flex items-center gap-2 text-[#9b1c1c]">
-                          <MessageSquare className="h-4 w-4" />
-                          <p className="text-xs font-black uppercase">
-                            Komentar
-                          </p>
-                        </div>
-
-                        <p className="text-sm font-semibold text-gray-800">
-                          {getComment(item) || "Tidak ada komentar."}
-                        </p>
-                      </div>
+                      
                     </article>
                   );
                 })}
