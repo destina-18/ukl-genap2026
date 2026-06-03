@@ -6,7 +6,7 @@ import { Search, Users, RefreshCcw, Mail, Phone, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
-import AddCustomer from "./add";
+
 import DeleteCustomer from "./delete";
 import ResetPasswordCustomer from "./resetpw";
 import DetailCustomer from "./detail";
@@ -215,13 +215,7 @@ export default function AdminCustomersPage() {
             </div>
 
             <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap lg:w-auto lg:justify-end">
-              <div className="w-full sm:w-fit">
-                <AddCustomer
-                  baseApiUrl={BASE_API_URL}
-                  onSuccess={fetchCustomers}
-                />
-              </div>
-
+              
               <button
                 type="button"
                 onClick={fetchCustomers}
