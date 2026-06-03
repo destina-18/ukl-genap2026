@@ -20,12 +20,30 @@ function getToken() {
   return getCookie("accessToken") || getCookie("accesstoken");
 }
 
+function getArrayFromResponse(response: any) {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.data?.data)) return response.data.data;
+  if (Array.isArray(response?.menus)) return response.menus;
+  if (Array.isArray(response?.data?.menus)) return response.data.menus;
+  if (Array.isArray(response?.items)) return response.items;
+  if (Array.isArray(response?.data?.items)) return response.data.items;
+
+  return [];
+}
+
+function normalizeMenuName(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
 export default function AddMenu({
   categories,
+  menus,
   onSuccess,
 }: {
   categories: any[];
-  onSuccess: () => void;
+  menus: any[];
+  onSuccess: () => void | Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -74,6 +92,31 @@ export default function AddMenu({
     }
   }
 
+  async function checkDuplicateMenuName(menuName: string, token: string) {
+    const res = await fetch(`${BASE_API_URL}/api/vendor/menus?page=1&limit=1000`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json();
+    console.log("CHECK DUPLICATE MENU:", data);
+
+    if (!res.ok) {
+      alert(data.message || "Gagal mengecek nama menu");
+      return true;
+    }
+
+    const menus = getArrayFromResponse(data);
+    const newMenuName = normalizeMenuName(menuName);
+
+    return menus.some((menu: any) => {
+      const existingName = normalizeMenuName(String(menu?.name || ""));
+      return existingName === newMenuName;
+    });
+  }
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
@@ -94,6 +137,13 @@ export default function AddMenu({
 
       if (!token) {
         alert("Token tidak ditemukan. Silakan login ulang sebagai vendor.");
+        return;
+      }
+
+      const isDuplicate = await checkDuplicateMenuName(name, token);
+
+      if (isDuplicate) {
+        alert("Nama menu sudah ada. Gunakan nama menu yang berbeda.");
         return;
       }
 
