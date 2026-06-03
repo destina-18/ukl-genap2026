@@ -167,7 +167,7 @@ export default function Home() {
   ];
 
   return (
-    <main className="min-h-screen text-gray-900 relative overflow-hidden" style={{ backgroundColor: "#fff7f7" }}>
+    <main className="min-h-screen text-gray-900 relative" style={{ backgroundColor: "#fff7f7" }}>
       {/* Grid background */}
       <div
         aria-hidden="true"
