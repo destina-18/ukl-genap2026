@@ -81,9 +81,9 @@ export default function Home() {
   const [loadingStats, setLoadingStats] = useState<boolean>(true);
   const [scrolled, setScrolled] = useState<boolean>(false);
 
-const animatedMenus = useCountUp(totalMenus, 1400, 0);
-const animatedVendors = useCountUp(totalVendors, 1200, 150);
-const animatedCategories = useCountUp(totalCategories, 1000, 300);
+  const animatedMenus = useCountUp(totalMenus, 1400, 0);
+  const animatedVendors = useCountUp(totalVendors, 1200, 150);
+  const animatedCategories = useCountUp(totalCategories, 1000, 300);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -167,8 +167,26 @@ const animatedCategories = useCountUp(totalCategories, 1000, 300);
   ];
 
   return (
-    <main className="min-h-screen bg-[#fff7f7] text-gray-900">
-      {/* NAVBAR */}
+    <main className="min-h-screen text-gray-900 relative overflow-hidden" style={{ backgroundColor: "#fff7f7" }}>
+      {/* Grid background */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "fixed",
+          inset: "-50%",
+          backgroundImage: `
+        linear-gradient(rgba(127,29,29,0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(127,29,29,0.08) 1px, transparent 1px)
+      `,
+          backgroundSize: "96px 96px",
+          transform: "rotate(-15deg)",
+          zIndex: 0,
+          pointerEvents: "none",
+        }}
+      />
+
+      <div className="relative z-10">
+        {/* NAVBAR */}
       <nav
         className={`sticky top-0 z-50 px-6 py-4 transition-all duration-300 md:px-16 ${scrolled
             ? "border-b border-white/20 bg-white/60 shadow-lg shadow-black/5 backdrop-blur-2xl"
@@ -429,6 +447,7 @@ const animatedCategories = useCountUp(totalCategories, 1000, 300);
           </p>
         </FadeIn>
       </section>
+      </div>
     </main>
   );
 }
