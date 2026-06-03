@@ -1,5 +1,5 @@
 "use client";
-
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, ClipboardList, ShoppingBag, Store, FileText, BarChart2, ShieldCheck, Search, ShoppingCart, Package } from "lucide-react";
@@ -511,6 +511,82 @@ export default function Home() {
             </Link>
           </FadeIn>
         </section>
+
+        {/* FOOTER */}
+        <footer className="bg-[#fff7f7] border-t border-gray-100 px-6 py-12 md:px-16">
+          <div className="mx-auto max-w-7xl">
+            <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+
+              {/* Brand */}
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#991b1b] to-[#450a0a] text-xl font-black text-white shadow-lg shadow-red-900/30">
+                    K
+                  </div>
+                  <div>
+                    <p className="text-xl font-black text-[#7f1d1d]">KantinKlik</p>
+                    <p className="text-xs text-gray-500">Kantin sekolah digital</p>
+                  </div>
+                </div>
+                <p className="text-sm leading-relaxed text-gray-500">
+                  Platform pemesanan makanan kantin sekolah yang memudahkan customer, vendor, dan admin dalam satu sistem.
+                </p>
+              </div>
+
+              {/* Navigasi */}
+              <div className="flex flex-col gap-3">
+                <p className="text-xs font-black uppercase tracking-widest text-gray-400">Navigasi</p>
+                <a
+                  href="#tentang"
+                  onClick={(e) => { e.preventDefault(); document.getElementById("tentang")?.scrollIntoView({ behavior: "smooth" }); }}
+                  className="text-sm text-gray-600 hover:text-[#7f1d1d] transition-colors w-fit"
+                >
+                  Tentang
+                </a>
+                <Link href="/sign-in" className="text-sm text-gray-600 hover:text-[#7f1d1d] transition-colors w-fit">
+                  Masuk
+                </Link>
+                <Link href="/sign-up" className="text-sm text-gray-600 hover:text-[#7f1d1d] transition-colors w-fit">
+                  Daftar
+                </Link>
+              </div>
+
+              {/* Fitur */}
+              <div className="flex flex-col gap-3">
+                <p className="text-xs font-black uppercase tracking-widest text-gray-400">Fitur</p>
+                {["Lihat menu real-time", "Pesan tanpa antri", "Struk digital", "Kelola menu vendor", "Pantau statistik"].map((f) => (
+                  <p key={f} className="text-sm text-gray-500">{f}</p>
+                ))}
+              </div>
+
+              {/* Sekolah */}
+              <div className="flex flex-col gap-4">
+                <p className="text-xs font-black uppercase tracking-widest text-gray-400">Dikembangkan untuk</p>
+                <a
+                  href="https://www.smktelkom-mlg.sch.id"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 w-fit group"
+                >
+                  <div className="h-12 w-12 overflow-hidden rounded-2xl border border-gray-100 bg-white flex-shrink-0">
+                    <Image src="/favicon.ico" alt="Logo SMK Telkom Malang" width={48} height={48} className="object-cover" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900 group-hover:text-[#7f1d1d] transition-colors">SMK Telkom Malang</p>
+                    <p className="text-xs text-gray-400">smktelkom-mlg.sch.id</p>
+                  </div>
+                </a>
+              </div>
+
+            </div>
+
+            {/* Bottom bar */}
+            <div className="mt-10 border-t border-gray-100 pt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-gray-400">© {new Date().getFullYear()} KantinKlik. All rights reserved.</p>
+              <p className="text-xs text-gray-400">Dibuat untuk SMK Telkom Malang</p>
+            </div>
+          </div>
+        </footer>
       </div>
     </main>
   );
