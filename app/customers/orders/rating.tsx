@@ -34,41 +34,6 @@ function getToken() {
   );
 }
 
-function saveRatingToLocal(orderItemId: number | string, stars: number) {
-  if (typeof window === "undefined") return;
-
-  localStorage.setItem(`rating-order-item-${orderItemId}`, String(stars));
-
-  window.dispatchEvent(
-    new CustomEvent("rating-updated", {
-      detail: {
-        orderItemId: String(orderItemId),
-        stars,
-      },
-    })
-  );
-}
-
-function getErrorMessage(data: any) {
-  if (Array.isArray(data?.message)) return data.message.join(", ");
-  if (typeof data?.message === "string") return data.message;
-  if (typeof data?.error === "string") return data.error;
-
-  return "Gagal memberi rating";
-}
-
-function isAlreadyRatedMessage(message: string) {
-  const lower = message.toLowerCase();
-
-  return (
-    lower.includes("sudah memberikan rating") ||
-    lower.includes("sudah memberi rating") ||
-    lower.includes("sudah dirating") ||
-    lower.includes("already rated") ||
-    lower.includes("already")
-  );
-}
-
 export default function Rating({
   orderItemId,
   baseApiUrl,
@@ -109,12 +74,7 @@ export default function Rating({
 
       console.log("RATING PAYLOAD:", payload);
 
-      const cleanBaseApiUrl = baseApiUrl.replace(/\/$/, "");
-      const ratingUrl = cleanBaseApiUrl.endsWith("/api")
-        ? `${cleanBaseApiUrl}/ratings`
-        : `${cleanBaseApiUrl}/api/ratings`;
-
-      const response = await fetch(ratingUrl, {
+      const response = await fetch(`${baseApiUrl}/api/ratings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -129,21 +89,13 @@ export default function Rating({
       console.log("RATING RESPONSE:", data);
 
       if (!response.ok) {
-        const message = getErrorMessage(data);
-
-        if (isAlreadyRatedMessage(message)) {
-          saveRatingToLocal(orderItemId, stars);
-          alert("Kamu sudah memberikan rating untuk item ini.");
-          setOpen(false);
-          onSuccess();
-          return;
-        }
+        const message = Array.isArray(data?.message)
+          ? data.message.join(", ")
+          : data?.message || "Gagal memberi rating";
 
         alert(message);
         return;
       }
-
-      saveRatingToLocal(orderItemId, stars);
 
       alert("Rating berhasil dikirim");
       setOpen(false);
@@ -185,8 +137,7 @@ export default function Rating({
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                disabled={loading}
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-70"
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-700 transition hover:bg-red-100"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -204,8 +155,7 @@ export default function Rating({
                       key={value}
                       type="button"
                       onClick={() => setStars(value)}
-                      disabled={loading}
-                      className="transition hover:scale-110 disabled:cursor-not-allowed disabled:opacity-70"
+                      className="transition hover:scale-110"
                     >
                       <Star
                         className={`h-9 w-9 ${
@@ -227,8 +177,7 @@ export default function Rating({
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  disabled={loading}
-                  className="w-full rounded-2xl border border-[#7f1d1d]/20 bg-white px-5 py-3 text-sm font-black text-[#7f1d1d] transition hover:bg-[#fff7f7] disabled:cursor-not-allowed disabled:opacity-70"
+                  className="w-full rounded-2xl border border-[#7f1d1d]/20 bg-white px-5 py-3 text-sm font-black text-[#7f1d1d] transition hover:bg-[#fff7f7]"
                 >
                   Batal
                 </button>

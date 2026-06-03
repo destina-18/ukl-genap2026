@@ -14,6 +14,11 @@ export type Menu = {
   imageUrl?: string;
   stock?: number;
   isAvailable?: boolean;
+  averageRating?: number | string | null;
+  avgRating?: number | string | null;
+  rating?: number | string | null;
+  ratingAverage?: number | string | null;
+  ratingsAverage?: number | string | null;
   category?: {
     name?: string;
   };
@@ -42,11 +47,34 @@ export function formatRupiah(value: number | string | undefined) {
   }).format(numberValue);
 }
 
+function getMenuRating(menu: Menu) {
+  const rawRating =
+    menu.averageRating ??
+    menu.avgRating ??
+    menu.ratingAverage ??
+    menu.ratingsAverage ??
+    menu.rating ??
+    null;
+
+  if (rawRating === null || rawRating === undefined || rawRating === "") {
+    return null;
+  }
+
+  const ratingNumber = Number(rawRating);
+
+  if (Number.isNaN(ratingNumber) || ratingNumber <= 0) {
+    return null;
+  }
+
+  return ratingNumber;
+}
+
 export default function MenuCard({ menu, onAddToCart }: MenuCardProps) {
   const menuId = getMenuId(menu);
   const menuName = menu.name || menu.menuName || "Menu";
   const menuImage = menu.imageUrl || menu.image;
   const available = menu.isAvailable !== false;
+  const ratingValue = getMenuRating(menu);
 
   return (
     <article
@@ -88,10 +116,12 @@ export default function MenuCard({ menu, onAddToCart }: MenuCardProps) {
             {menuName}
           </h3>
 
-          <div className="flex items-center gap-1 rounded-full bg-yellow-50 px-2 py-1 text-xs font-black text-yellow-700">
-            <Star className="h-3 w-3 fill-current" />
-            5.0
-          </div>
+          {ratingValue !== null && (
+            <div className="flex shrink-0 items-center gap-1 rounded-full bg-yellow-50 px-2 py-1 text-xs font-black text-yellow-700">
+              <Star className="h-3 w-3 fill-current" />
+              {ratingValue.toFixed(1)}
+            </div>
+          )}
         </div>
 
         <p className="line-clamp-2 min-h-[40px] text-sm leading-5 text-gray-500">
