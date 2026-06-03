@@ -50,6 +50,29 @@ function FadeIn({
   );
 }
 
+/* ─── Count-up Animation ─── */
+function useCountUp(target: number, duration = 1200, delay = 0) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (target === 0) return;
+    const timer = setTimeout(() => {
+      const start = performance.now();
+      function tick(now: number) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setCount(Math.round(eased * target));
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [target, duration, delay]);
+
+  return count;
+}
+
 /* ─── Main page ─── */
 export default function Home() {
   const [totalMenus, setTotalMenus] = useState<number>(0);
@@ -57,6 +80,10 @@ export default function Home() {
   const [totalCategories, setTotalCategories] = useState<number>(0);
   const [loadingStats, setLoadingStats] = useState<boolean>(true);
   const [scrolled, setScrolled] = useState<boolean>(false);
+
+const animatedMenus = useCountUp(totalMenus, 1400, 0);
+const animatedVendors = useCountUp(totalVendors, 1200, 150);
+const animatedCategories = useCountUp(totalCategories, 1000, 300);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -235,21 +262,21 @@ export default function Home() {
                 <div className="mt-8 grid grid-cols-3 gap-3">
                   <div className="rounded-2xl bg-white/15 p-4">
                     <p className="text-2xl font-black">
-                      {loadingStats ? "..." : totalMenus}
+                      {loadingStats ? "..." : animatedMenus}
                     </p>
                     <p className="text-xs text-red-100">Menu</p>
                   </div>
 
                   <div className="rounded-2xl bg-white/15 p-4">
                     <p className="text-2xl font-black">
-                      {loadingStats ? "..." : totalVendors}
+                      {loadingStats ? "..." : animatedVendors}
                     </p>
                     <p className="text-xs text-red-100">Vendor</p>
                   </div>
 
                   <div className="rounded-2xl bg-white/15 p-4">
                     <p className="text-2xl font-black">
-                      {loadingStats ? "..." : totalCategories}
+                      {loadingStats ? "..." : animatedCategories}
                     </p>
                     <p className="text-xs text-red-100">Kategori</p>
                   </div>
