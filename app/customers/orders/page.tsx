@@ -107,6 +107,7 @@ export default function CustomersOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancelLoadingId, setCancelLoadingId] = useState<string>("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
 
   const [orderUpdateNotification, setOrderUpdateNotification] = useState<{
     orderId: number;
@@ -128,11 +129,12 @@ export default function CustomersOrdersPage() {
         return;
       }
 
-      const response = await fetch(`${BASE_API_URL}/api/orders/me`, {
+      const url = new URL(`${BASE_API_URL}/api/orders/me`);
+      if (selectedStatus) url.searchParams.set("status", selectedStatus);
+
+      const response = await fetch(url.toString(), {
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
       });
 
@@ -209,7 +211,7 @@ export default function CustomersOrdersPage() {
 
   useEffect(() => {
     getOrders();
-  }, []);
+  }, [selectedStatus]);
 
   useEffect(() => {
     if (!socket) return;
@@ -305,9 +307,8 @@ export default function CustomersOrdersPage() {
               <h1 className="flex items-center gap-3 text-3xl font-black tracking-tight md:text-5xl">
                 Pesanan Saya
                 <span
-                  className={`inline-flex h-3.5 w-3.5 rounded-full ${
-                    isConnected ? "animate-pulse bg-green-400" : "bg-red-400"
-                  }`}
+                  className={`inline-flex h-3.5 w-3.5 rounded-full ${isConnected ? "animate-pulse bg-green-400" : "bg-red-400"
+                    }`}
                   title={
                     isConnected
                       ? "WebSocket Terhubung"
@@ -336,6 +337,22 @@ export default function CustomersOrdersPage() {
           </div>
         </section>
 
+        <div className="mb-6 flex items-center gap-3">
+          <p className="text-sm font-bold text-gray-500">Filter status:</p>
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7f1d1d]/20"
+          >
+            <option value="">Semua</option>
+            <option value="PENDING">Pending</option>
+            <option value="ACCEPTED">Diterima</option>
+            <option value="REJECTED">Ditolak</option>
+            <option value="READY">Siap Diambil</option>
+            <option value="COMPLETED">Selesai</option>
+            <option value="CANCELLED">Dibatalkan</option>
+          </select>
+        </div>
         <OrderStats orders={orders} loading={loading} />
 
         {loading ? (
