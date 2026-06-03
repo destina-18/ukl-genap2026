@@ -164,7 +164,7 @@ export default function ResetPasswordCustomer({
                     type={showPassword ? "text" : "password"}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Minimal 6 karakter"
+                    placeholder="Password baru"
                     className="pr-11"
                     disabled={loading}
                   />
