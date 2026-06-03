@@ -36,6 +36,8 @@ function normalizeMenuName(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+type DuplicateCheckResult = "duplicate" | "not_duplicate" | "error";
+
 export default function AddMenu({
   categories,
   menus,
@@ -92,29 +94,63 @@ export default function AddMenu({
     }
   }
 
-  async function checkDuplicateMenuName(menuName: string, token: string) {
-    const res = await fetch(`${BASE_API_URL}/api/vendor/menus?page=1&limit=1000`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    const data = await res.json();
-    console.log("CHECK DUPLICATE MENU:", data);
-
-    if (!res.ok) {
-      alert(data.message || "Gagal mengecek nama menu");
-      return true;
-    }
-
-    const menus = getArrayFromResponse(data);
+  async function checkDuplicateMenuName(
+    menuName: string,
+    token: string
+  ): Promise<DuplicateCheckResult> {
     const newMenuName = normalizeMenuName(menuName);
 
-    return menus.some((menu: any) => {
+    // 1. CEK DARI DATA MENU YANG SUDAH ADA DI HALAMAN SEKARANG
+    const localDuplicate = menus.some((menu: any) => {
       const existingName = normalizeMenuName(String(menu?.name || ""));
       return existingName === newMenuName;
     });
+
+    if (localDuplicate) {
+      return "duplicate";
+    }
+
+    try {
+      // 2. CEK ULANG KE BACKEND VENDOR MENU
+      // JANGAN pakai limit=1000 karena backend kamu balikin 400
+      const res = await fetch(
+        `${BASE_API_URL}/api/vendor/menus?page=1&limit=100`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await res.json();
+      console.log("CHECK DUPLICATE MENU:", data);
+
+      if (!res.ok) {
+        alert(
+          data.message ||
+            "Gagal mengecek nama menu. Coba refresh halaman dulu."
+        );
+        return "error";
+      }
+
+      const menuList = getArrayFromResponse(data);
+
+      const backendDuplicate = menuList.some((menu: any) => {
+        const existingName = normalizeMenuName(String(menu?.name || ""));
+        return existingName === newMenuName;
+      });
+
+      if (backendDuplicate) {
+        return "duplicate";
+      }
+
+      return "not_duplicate";
+    } catch (error) {
+      console.error("ERROR CHECK DUPLICATE MENU:", error);
+      alert("Gagal mengecek nama menu. Coba refresh halaman dulu.");
+      return "error";
+    }
   }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -140,16 +176,20 @@ export default function AddMenu({
         return;
       }
 
-      const isDuplicate = await checkDuplicateMenuName(name, token);
+      const duplicateStatus = await checkDuplicateMenuName(name, token);
 
-      if (isDuplicate) {
+      if (duplicateStatus === "duplicate") {
         alert("Nama menu sudah ada. Gunakan nama menu yang berbeda.");
         return;
       }
 
+      if (duplicateStatus === "error") {
+        return;
+      }
+
       const body = {
-        name,
-        description,
+        name: name.trim(),
+        description: description.trim(),
         price: Number(price),
         stock: Number(stock),
         categoryId: Number(categoryId),
@@ -182,7 +222,7 @@ export default function AddMenu({
       alert("Menu berhasil ditambahkan");
       resetForm();
       setOpen(false);
-      onSuccess();
+      await onSuccess();
     } catch (error) {
       console.error(error);
       alert("Terjadi kesalahan saat menambahkan menu");
@@ -310,7 +350,7 @@ export default function AddMenu({
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex flex-col-reverse justify-end gap-3 pt-2 sm:flex-row">
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
@@ -322,7 +362,7 @@ export default function AddMenu({
                 <button
                   type="submit"
                   disabled={saving}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#991b1b] to-[#450a0a] px-6 py-3 text-sm font-black text-white shadow-lg shadow-red-900/20 transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#991b1b] to-[#450a0a] px-6 py-3 text-sm font-black text-white shadow-lg shadow-red-900/20 transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Plus size={18} />
                   {saving ? "Menyimpan..." : "Tambah Menu"}
