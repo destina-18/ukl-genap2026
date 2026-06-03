@@ -42,6 +42,20 @@ export type OrderItem = {
 
   rating?: any;
   ratings?: any[];
+  userRating?: any;
+  ratingValue?: any;
+  review?: any;
+
+  imageUrl?: string;
+  image_url?: string;
+  image?: string;
+  photo?: string;
+  thumbnail?: string;
+  picture?: string;
+  menuImage?: string;
+  menu_image?: string;
+  menuImageUrl?: string;
+  menu_image_url?: string;
 
   menu?: {
     id?: number | string;
@@ -51,6 +65,12 @@ export type OrderItem = {
     menu_name?: string;
     title?: string;
     price?: number | string;
+    imageUrl?: string;
+    image_url?: string;
+    image?: string;
+    photo?: string;
+    thumbnail?: string;
+    picture?: string;
   };
 
   Menu?: {
@@ -61,27 +81,52 @@ export type OrderItem = {
     menu_name?: string;
     title?: string;
     price?: number | string;
+    imageUrl?: string;
+    image_url?: string;
+    image?: string;
+    photo?: string;
+    thumbnail?: string;
+    picture?: string;
   };
 
   product?: {
     name?: string;
     title?: string;
     price?: number | string;
+    imageUrl?: string;
+    image_url?: string;
+    image?: string;
+    photo?: string;
+    thumbnail?: string;
+    picture?: string;
   };
 
   food?: {
     name?: string;
     title?: string;
     price?: number | string;
+    imageUrl?: string;
+    image_url?: string;
+    image?: string;
+    photo?: string;
+    thumbnail?: string;
+    picture?: string;
   };
 
   cartItem?: {
     menu?: {
+      id?: number | string;
       name?: string;
       menuName?: string;
       menu_name?: string;
       title?: string;
       price?: number | string;
+      imageUrl?: string;
+      image_url?: string;
+      image?: string;
+      photo?: string;
+      thumbnail?: string;
+      picture?: string;
     };
   };
 
@@ -163,6 +208,7 @@ export type Order = {
 
 type OrderCardProps = {
   order: Order;
+  menus?: any[];
   cancelLoadingId: string;
   baseApiUrl: string;
   onCancelOrder: (orderId: number | string) => void;
@@ -417,14 +463,123 @@ function getStatusStyle(status?: string) {
   };
 }
 
+function getRatingValue(item: OrderItem) {
+  const ratingData =
+    item.rating ||
+    item.userRating ||
+    item.ratingValue ||
+    item.review ||
+    item.ratings?.[0] ||
+    null;
+
+  if (!ratingData) return null;
+
+  if (typeof ratingData === "number" || typeof ratingData === "string") {
+    return ratingData;
+  }
+
+  return (
+    ratingData.stars ||
+    ratingData.rating ||
+    ratingData.value ||
+    ratingData.score ||
+    ratingData.star ||
+    ratingData.ratingValue ||
+    null
+  );
+}
+
 function hasRated(item: OrderItem) {
+  if (getRatingValue(item)) return true;
   if (item.rating) return true;
+  if (item.userRating) return true;
+  if (item.ratingValue) return true;
+  if (item.review) return true;
   if (Array.isArray(item.ratings) && item.ratings.length > 0) return true;
+
   return false;
+}
+
+function buildImageUrl(baseApiUrl: string, image?: string) {
+  if (!image) return "";
+
+  if (image.startsWith("http://") || image.startsWith("https://")) {
+    return image;
+  }
+
+  const cleanBaseUrl = baseApiUrl.replace(/\/$/, "");
+  const cleanImage = image.startsWith("/") ? image : `/${image}`;
+
+  return `${cleanBaseUrl}${cleanImage}`;
+}
+
+function getMenuImage(item: OrderItem, menus: any[], baseApiUrl: string) {
+  const menuId =
+    item.menuId ||
+    item.menu_id ||
+    item.menu?.id ||
+    item.Menu?.id ||
+    item.cartItem?.menu?.id;
+
+  const matchedMenu = menus.find((menu) => {
+    return Number(menu?.id) === Number(menuId);
+  });
+
+  const image =
+    item.menu?.imageUrl ||
+    item.menu?.image_url ||
+    item.menu?.image ||
+    item.menu?.photo ||
+    item.menu?.thumbnail ||
+    item.menu?.picture ||
+    item.Menu?.imageUrl ||
+    item.Menu?.image_url ||
+    item.Menu?.image ||
+    item.Menu?.photo ||
+    item.Menu?.thumbnail ||
+    item.Menu?.picture ||
+    item.product?.imageUrl ||
+    item.product?.image_url ||
+    item.product?.image ||
+    item.product?.photo ||
+    item.product?.thumbnail ||
+    item.product?.picture ||
+    item.food?.imageUrl ||
+    item.food?.image_url ||
+    item.food?.image ||
+    item.food?.photo ||
+    item.food?.thumbnail ||
+    item.food?.picture ||
+    item.cartItem?.menu?.imageUrl ||
+    item.cartItem?.menu?.image_url ||
+    item.cartItem?.menu?.image ||
+    item.cartItem?.menu?.photo ||
+    item.cartItem?.menu?.thumbnail ||
+    item.cartItem?.menu?.picture ||
+    item.imageUrl ||
+    item.image_url ||
+    item.image ||
+    item.photo ||
+    item.thumbnail ||
+    item.picture ||
+    item.menuImage ||
+    item.menu_image ||
+    item.menuImageUrl ||
+    item.menu_image_url ||
+    matchedMenu?.imageUrl ||
+    matchedMenu?.image_url ||
+    matchedMenu?.image ||
+    matchedMenu?.photo ||
+    matchedMenu?.thumbnail ||
+    matchedMenu?.picture ||
+    "";
+
+  return buildImageUrl(baseApiUrl, String(image || ""));
 }
 
 export default function OrderCard({
   order,
+  menus = [],
   cancelLoadingId,
   baseApiUrl,
   onCancelOrder,
@@ -573,20 +728,35 @@ export default function OrderCard({
               const price = getItemPrice(item);
               const subtotal = getItemSubtotal(item);
               const alreadyRated = hasRated(item);
+              const ratingValue = getRatingValue(item);
+              const imageUrl = getMenuImage(item, menus, baseApiUrl);
 
               return (
                 <div
-                  key={String(itemId || index)}
+                  key={String(itemId || item.menuId || item.menu_id || index)}
                   className="rounded-2xl border border-[#7f1d1d]/10 p-4"
                 >
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
-                        <Utensils className="h-5 w-5" />
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt={menuName}
+                            className="h-full w-full object-cover"
+                            onError={(event) => {
+                              event.currentTarget.style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <Utensils className="h-5 w-5" />
+                        )}
                       </div>
 
-                      <div>
-                        <p className="font-black text-gray-950">{menuName}</p>
+                      <div className="min-w-0">
+                        <p className="truncate font-black text-gray-950">
+                          {menuName}
+                        </p>
 
                         <p className="text-sm text-gray-500">
                           {quantity} x {formatRupiah(price)}
@@ -608,8 +778,11 @@ export default function OrderCard({
                       )}
 
                       {canRating && alreadyRated && (
-                        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-black text-green-700">
-                          Sudah dirating
+                        <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-xs font-black text-green-700">
+                          ⭐{" "}
+                          {ratingValue
+                            ? `${ratingValue}/5`
+                            : "Sudah diberi rating"}
                         </span>
                       )}
                     </div>

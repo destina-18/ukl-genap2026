@@ -77,23 +77,24 @@ function debugOrders(orders: Order[]) {
     );
 
     items.forEach((item: any, itemIndex: number) => {
-      console.log(
-        `ORDER ${orderIndex + 1} - ITEM ${itemIndex + 1}:`,
-        JSON.stringify(item, null, 2)
-      );
-
-      console.log(`CEK NAMA MENU ITEM ${itemIndex + 1}:`, {
-        "item.menu?.name": item?.menu?.name,
-        "item.Menu?.name": item?.Menu?.name,
-        "item.menuName": item?.menuName,
-        "item.menu_name": item?.menu_name,
-        "item.name": item?.name,
-        "item.title": item?.title,
-        "item.product?.name": item?.product?.name,
-        "item.food?.name": item?.food?.name,
-        "item.cartItem?.menu?.name": item?.cartItem?.menu?.name,
-        "item.menuId": item?.menuId,
-        "item.menu_id": item?.menu_id,
+      console.log(`CEK FOTO MENU ITEM ${itemIndex + 1}:`, {
+        "item.imageUrl": item?.imageUrl,
+        "item.image_url": item?.image_url,
+        "item.image": item?.image,
+        "item.photo": item?.photo,
+        "item.thumbnail": item?.thumbnail,
+        "item.picture": item?.picture,
+        "item.menuImage": item?.menuImage,
+        "item.menu_image": item?.menu_image,
+        "item.menuImageUrl": item?.menuImageUrl,
+        "item.menu_image_url": item?.menu_image_url,
+        "item.menu?.imageUrl": item?.menu?.imageUrl,
+        "item.menu?.image_url": item?.menu?.image_url,
+        "item.menu?.image": item?.menu?.image,
+        "item.menu?.photo": item?.menu?.photo,
+        "item.Menu?.imageUrl": item?.Menu?.imageUrl,
+        "item.Menu?.image_url": item?.Menu?.image_url,
+        "item.cartItem?.menu?.imageUrl": item?.cartItem?.menu?.imageUrl,
       });
     });
   });
@@ -220,57 +221,6 @@ export default function CustomersOrdersPage() {
       (data: { orderId: number; status: string; message: string }) => {
         console.log("[WebSocket] Event orderUpdate diterima:", data);
 
-        try {
-          const AudioContext =
-            window.AudioContext || (window as any).webkitAudioContext;
-
-          if (AudioContext) {
-            const ctx = new AudioContext();
-
-            if (ctx.state !== "suspended") {
-              const osc1 = ctx.createOscillator();
-              const gain1 = ctx.createGain();
-
-              osc1.type = "sine";
-              osc1.frequency.setValueAtTime(523.25, ctx.currentTime);
-              gain1.gain.setValueAtTime(0.08, ctx.currentTime);
-              gain1.gain.exponentialRampToValueAtTime(
-                0.01,
-                ctx.currentTime + 0.3
-              );
-
-              osc1.connect(gain1);
-              gain1.connect(ctx.destination);
-              osc1.start();
-              osc1.stop(ctx.currentTime + 0.3);
-
-              setTimeout(() => {
-                try {
-                  const osc2 = ctx.createOscillator();
-                  const gain2 = ctx.createGain();
-
-                  osc2.type = "sine";
-                  osc2.frequency.setValueAtTime(659.25, ctx.currentTime);
-                  gain2.gain.setValueAtTime(0.1, ctx.currentTime);
-                  gain2.gain.exponentialRampToValueAtTime(
-                    0.01,
-                    ctx.currentTime + 0.4
-                  );
-
-                  osc2.connect(gain2);
-                  gain2.connect(ctx.destination);
-                  osc2.start();
-                  osc2.stop(ctx.currentTime + 0.4);
-                } catch (err) {
-                  console.warn("Gagal memutar suara kedua:", err);
-                }
-              }, 100);
-            }
-          }
-        } catch (error) {
-          console.warn("Autoplay audio blocked or failed:", error);
-        }
-
         setOrders((prevOrders) =>
           prevOrders.map((order) => {
             const currentId = order.id || order.orderId || order.order_id;
@@ -287,7 +237,6 @@ export default function CustomersOrdersPage() {
         );
 
         setOrderUpdateNotification(data);
-
         getOrders(true);
       }
     );
@@ -300,7 +249,7 @@ export default function CustomersOrdersPage() {
   return (
     <main className="relative min-h-screen bg-[#fff7f7] px-4 py-8 text-gray-900 md:px-8">
       {orderUpdateNotification && (
-        <div className="fixed bottom-6 right-6 z-50 max-w-sm animate-bounce rounded-2xl border border-red-500/20 bg-gradient-to-r from-red-800 to-red-950 p-5 text-white shadow-2xl shadow-red-900/30 backdrop-blur-xl">
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm rounded-2xl border border-red-500/20 bg-gradient-to-r from-red-800 to-red-950 p-5 text-white shadow-2xl shadow-red-900/30 backdrop-blur-xl">
           <div className="flex items-start gap-4">
             <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
@@ -319,9 +268,7 @@ export default function CustomersOrdersPage() {
               <div className="mt-3 flex gap-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    setOrderUpdateNotification(null);
-                  }}
+                  onClick={() => setOrderUpdateNotification(null)}
                   className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-white/20"
                 >
                   Tutup
@@ -407,7 +354,9 @@ export default function CustomersOrdersPage() {
           <section className="space-y-5">
             {orders.map((order, index) => (
               <OrderCard
-                key={String(order.id || order.orderId || order.order_id || index)}
+                key={String(
+                  order.id || order.orderId || order.order_id || index
+                )}
                 order={order}
                 cancelLoadingId={cancelLoadingId}
                 baseApiUrl={BASE_API_URL}

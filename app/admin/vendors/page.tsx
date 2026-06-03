@@ -221,25 +221,28 @@ export default function VendorsPage() {
         </section>
 
         {/* STATS */}
-        <section className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <div className="rounded-3xl border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
+        <section className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="min-h-[120px] rounded-3xl border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
             <p className="text-sm font-semibold text-gray-500">Total Vendor</p>
+
             <h2 className="mt-2 text-3xl font-black text-[#7f1d1d] sm:text-4xl">
               {loading ? "..." : vendors.length}
             </h2>
           </div>
 
-          <div className="rounded-3xl border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
+          <div className="min-h-[120px] rounded-3xl border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5">
             <p className="text-sm font-semibold text-gray-500">Vendor Aktif</p>
+
             <h2 className="mt-2 text-3xl font-black text-green-700 sm:text-4xl">
               {loading ? "..." : activeVendors}
             </h2>
           </div>
 
-          <div className="rounded-3xl border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5 sm:col-span-2 xl:col-span-1">
+          <div className="min-h-[120px] rounded-3xl border border-[#7f1d1d]/10 bg-white p-5 shadow-lg shadow-red-900/5 sm:col-span-2 lg:col-span-1">
             <p className="text-sm font-semibold text-gray-500">
               Vendor Nonaktif
             </p>
+
             <h2 className="mt-2 text-3xl font-black text-[#7f1d1d] sm:text-4xl">
               {loading ? "..." : inactiveVendors}
             </h2>
@@ -264,6 +267,7 @@ export default function VendorsPage() {
         <section className="overflow-hidden rounded-3xl border border-[#7f1d1d]/10 bg-white shadow-xl shadow-red-900/5">
           <div className="border-b border-[#7f1d1d]/10 bg-white p-5">
             <h2 className="text-lg font-black text-gray-950">Daftar Vendor</h2>
+
             <p className="mt-1 text-sm text-gray-500">
               Total hasil ditampilkan: {filteredVendors.length}
             </p>
@@ -333,10 +337,12 @@ export default function VendorsPage() {
                       <div className="mt-4 grid gap-3 text-sm">
                         <div className="flex items-start gap-3 rounded-2xl bg-white p-3">
                           <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[#7f1d1d]" />
+
                           <div className="min-w-0">
                             <p className="text-xs font-bold text-gray-400">
                               Email
                             </p>
+
                             <p className="break-all font-semibold text-gray-700">
                               {getVendorEmail(vendor)}
                             </p>
@@ -346,10 +352,12 @@ export default function VendorsPage() {
                         <div className="grid gap-3 sm:grid-cols-2">
                           <div className="flex items-start gap-3 rounded-2xl bg-white p-3">
                             <Phone className="mt-0.5 h-4 w-4 shrink-0 text-[#7f1d1d]" />
+
                             <div className="min-w-0">
                               <p className="text-xs font-bold text-gray-400">
                                 WhatsApp
                               </p>
+
                               <p className="break-all font-semibold text-gray-700">
                                 {getVendorWhatsapp(vendor)}
                               </p>
@@ -358,10 +366,12 @@ export default function VendorsPage() {
 
                           <div className="flex items-start gap-3 rounded-2xl bg-white p-3">
                             <Hash className="mt-0.5 h-4 w-4 shrink-0 text-[#7f1d1d]" />
+
                             <div className="min-w-0">
                               <p className="text-xs font-bold text-gray-400">
                                 No Kantin
                               </p>
+
                               <p className="font-semibold text-gray-700">
                                 {getCanteenNumber(vendor)}
                               </p>

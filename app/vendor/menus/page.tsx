@@ -51,13 +51,27 @@ function getMenuName(menu: any) {
   return menu.name || menu.menuName || "-";
 }
 
+/* TAMBAHAN BIAR AMAN KALAU VALUE-NYA OBJECT */
+function getSafeText(value: any) {
+  if (!value) return "";
+
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return String(value);
+
+  if (typeof value === "object") {
+    return value.name || value.categoryName || value.type || "";
+  }
+
+  return "";
+}
+
 function getCategoryName(menu: any) {
   return (
-    menu.category?.name ||
-    menu.category?.categoryName ||
-    menu.categoryName ||
-    menu.category_name ||
-    menu.category ||
+    getSafeText(menu.category?.name) ||
+    getSafeText(menu.category?.categoryName) ||
+    getSafeText(menu.categoryName) ||
+    getSafeText(menu.category_name) ||
+    getSafeText(menu.category) ||
     "-"
   );
 }
@@ -301,7 +315,11 @@ export default function VendorMenusPage() {
 
             <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:w-auto">
               <div className="w-full [&>*]:w-full">
-                <AddMenu categories={categories} onSuccess={fetchMenus} />
+                <AddMenu
+                  categories={categories}
+                  menus={menus}
+                  onSuccess={fetchMenus}
+                />
               </div>
 
               <button
@@ -322,9 +340,7 @@ export default function VendorMenusPage() {
         <section className="mb-5 rounded-[1.5rem] border border-[#7f1d1d]/10 bg-white p-4 shadow-sm md:p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-lg font-black text-gray-950">
-                Filter Menu
-              </h2>
+              <h2 className="text-lg font-black text-gray-950">Filter Menu</h2>
               <p className="mt-1 text-sm text-gray-500">
                 Pilih kategori menu yang ingin ditampilkan.
               </p>
@@ -508,14 +524,10 @@ export default function VendorMenusPage() {
                       <th className="p-4 font-black text-[#7f1d1d]">
                         Kategori
                       </th>
-                      <th className="p-4 font-black text-[#7f1d1d]">
-                        Filter
-                      </th>
+                      <th className="p-4 font-black text-[#7f1d1d]">Filter</th>
                       <th className="p-4 font-black text-[#7f1d1d]">Harga</th>
                       <th className="p-4 font-black text-[#7f1d1d]">Stok</th>
-                      <th className="p-4 font-black text-[#7f1d1d]">
-                        Status
-                      </th>
+                      <th className="p-4 font-black text-[#7f1d1d]">Status</th>
                       <th className="p-4 text-center font-black text-[#7f1d1d]">
                         Aksi
                       </th>

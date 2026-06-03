@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LogOut,
   LayoutDashboard,
@@ -52,20 +52,37 @@ const menuItems = [
 
 export function AppCustomerSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  function deleteCookie(name: string) {
+    document.cookie = `${name}=; path=/; max-age=0`;
+    document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+  }
 
   function handleLogout() {
-    document.cookie =
-      "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie =
-      "accesstoken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie =
-      "role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-
+    // hapus localStorage
     localStorage.removeItem("accessToken");
+    localStorage.removeItem("accesstoken");
+    localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("user");
 
-    window.location.href = "/sign-in";
+    // hapus sessionStorage
+    sessionStorage.clear();
+
+    // hapus cookie
+    deleteCookie("accessToken");
+    deleteCookie("accesstoken");
+    deleteCookie("token");
+    deleteCookie("role");
+
+    // arahkan ke sign-in
+    router.replace("/sign-in");
+
+    // paksa refresh biar state lama hilang
+    setTimeout(() => {
+      window.location.href = "/sign-in";
+    }, 100);
   }
 
   return (

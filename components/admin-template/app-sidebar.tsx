@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LogOut,
   LayoutDashboard,
@@ -40,16 +40,37 @@ const menuItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  function deleteCookie(name: string) {
+    document.cookie = `${name}=; path=/; max-age=0`;
+    document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+  }
 
   function handleLogout() {
-    document.cookie =
-      "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie =
-      "accesstoken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie =
-      "role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    // Hapus semua kemungkinan token dari localStorage
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("accesstoken");
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("user");
 
-    window.location.href = "/sign-in";
+    // Hapus sessionStorage juga
+    sessionStorage.clear();
+
+    // Hapus semua kemungkinan token dari cookie
+    deleteCookie("accessToken");
+    deleteCookie("accesstoken");
+    deleteCookie("token");
+    deleteCookie("role");
+
+    // Redirect ke login
+    router.replace("/sign-in");
+
+    // Paksa refresh agar state/token lama benar-benar hilang
+    setTimeout(() => {
+      window.location.href = "/sign-in";
+    }, 100);
   }
 
   return (
@@ -82,6 +103,8 @@ export function AppSidebar() {
             const isActive =
               pathname === item.url || pathname.startsWith(`${item.url}/`);
 
+            const Icon = item.icon;
+
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
@@ -93,7 +116,7 @@ export function AppSidebar() {
                   }`}
                 >
                   <Link href={item.url} className="flex items-center gap-3">
-                    <item.icon
+                    <Icon
                       className={`h-5 w-5 ${
                         isActive ? "text-white" : "text-[#7f1d1d]"
                       }`}

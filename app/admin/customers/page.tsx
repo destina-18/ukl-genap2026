@@ -239,29 +239,32 @@ export default function AdminCustomersPage() {
         </section>
 
         {/* STATS */}
-        <section className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 md:mb-6 xl:grid-cols-3">
-          <div className="rounded-3xl border border-red-100 bg-white p-5 shadow-lg shadow-red-900/5">
+        <section className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 md:mb-6 lg:grid-cols-3">
+          <div className="min-h-[120px] rounded-3xl border border-red-100 bg-white p-5 shadow-lg shadow-red-900/5">
             <p className="text-sm font-semibold text-gray-500">
               Total Customer
             </p>
+
             <h2 className="mt-2 text-3xl font-black text-[#7f1d1d] sm:text-4xl">
               {loading ? "..." : customers.length}
             </h2>
           </div>
 
-          <div className="rounded-3xl border border-red-100 bg-white p-5 shadow-lg shadow-red-900/5">
+          <div className="min-h-[120px] rounded-3xl border border-red-100 bg-white p-5 shadow-lg shadow-red-900/5">
             <p className="text-sm font-semibold text-gray-500">
               Terverifikasi
             </p>
+
             <h2 className="mt-2 text-3xl font-black text-green-700 sm:text-4xl">
               {loading ? "..." : verifiedCount}
             </h2>
           </div>
 
-          <div className="rounded-3xl border border-red-100 bg-white p-5 shadow-lg shadow-red-900/5 sm:col-span-2 xl:col-span-1">
+          <div className="min-h-[120px] rounded-3xl border border-red-100 bg-white p-5 shadow-lg shadow-red-900/5 sm:col-span-2 lg:col-span-1">
             <p className="text-sm font-semibold text-gray-500">
               Belum Verifikasi
             </p>
+
             <h2 className="mt-2 text-3xl font-black text-[#7f1d1d] sm:text-4xl">
               {loading ? "..." : unverifiedCount}
             </h2>
@@ -376,7 +379,6 @@ export default function AdminCustomersPage() {
                         </div>
                       </div>
 
-                      {/* AKSI MOBILE - INI SUDAH MENYAMPING */}
                       <div className="mt-4 flex flex-row flex-wrap items-center gap-2 border-t border-red-100 pt-4">
                         <DetailCustomer customer={customer} />
 

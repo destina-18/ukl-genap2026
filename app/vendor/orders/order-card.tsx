@@ -28,12 +28,54 @@ import {
 
 type OrderCardProps = {
   order: Order;
+  menus: any[];
   actionLoading: string;
   updateOrderStatus: (orderId: number | string, action: string) => void;
 };
 
+function getImageUrl(image: string) {
+  if (!image) return "";
+
+  const baseApiUrl =
+    process.env.NEXT_PUBLIC_BASE_API_URL || "https://kantinklik.up.railway.app";
+
+  if (image.startsWith("http://") || image.startsWith("https://")) {
+    return image;
+  }
+
+  return `${baseApiUrl}${image.startsWith("/") ? image : `/${image}`}`;
+}
+
+function getMenuImage(item: any, menus: any[]) {
+  const menuId = item?.menuId || item?.menu_id || item?.menu?.id;
+
+  const menu = menus.find(
+    (menuItem) => Number(menuItem?.id) === Number(menuId)
+  );
+
+  const image =
+    item?.menu?.imageUrl ||
+    item?.menu?.image_url ||
+    item?.menu?.image ||
+    item?.menu?.photo ||
+    item?.menu?.thumbnail ||
+    item?.imageUrl ||
+    item?.image_url ||
+    item?.image ||
+    item?.menuImage ||
+    menu?.imageUrl ||
+    menu?.image_url ||
+    menu?.image ||
+    menu?.photo ||
+    menu?.thumbnail ||
+    "";
+
+  return getImageUrl(String(image || ""));
+}
+
 export default function OrderCard({
   order,
+  menus,
   actionLoading,
   updateOrderStatus,
 }: OrderCardProps) {
@@ -120,19 +162,35 @@ export default function OrderCard({
               const quantity = getItemQuantity(item);
               const price = getItemPrice(item);
               const subtotal = getItemSubtotal(item);
+              const imageUrl = getMenuImage(item, menus);
 
               return (
                 <div
                   key={String(item?.id || item?.menuId || item?.menu_id || index)}
                   className="flex items-center justify-between gap-4 rounded-2xl border border-[#7f1d1d]/10 p-4"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#7f1d1d]/10 text-[#7f1d1d]">
-                      <Utensils className="h-5 w-5" />
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-[#7f1d1d]/10">
+                      {imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt={menuName}
+                          className="h-full w-full object-cover"
+                          onError={(event) => {
+                            event.currentTarget.style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[#7f1d1d]">
+                          <Utensils className="h-5 w-5" />
+                        </div>
+                      )}
                     </div>
 
-                    <div>
-                      <p className="font-black text-gray-950">{menuName}</p>
+                    <div className="min-w-0">
+                      <p className="truncate font-black text-gray-950">
+                        {menuName}
+                      </p>
 
                       <p className="text-sm text-gray-500">
                         {quantity} x {formatRupiah(price)}
@@ -140,7 +198,7 @@ export default function OrderCard({
                     </div>
                   </div>
 
-                  <p className="text-sm font-black text-[#7f1d1d]">
+                  <p className="shrink-0 text-sm font-black text-[#7f1d1d]">
                     {formatRupiah(subtotal)}
                   </p>
                 </div>

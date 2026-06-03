@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Store,
   LogOut,
   Utensils,
   Sparkles,
-  Star,
 } from "lucide-react";
 
 import {
@@ -46,16 +45,32 @@ const menuItems = [
 
 export function AppVendorSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  function deleteCookie(name: string) {
+    document.cookie = `${name}=; path=/; max-age=0`;
+    document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+  }
 
   function handleLogout() {
-    document.cookie =
-      "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie =
-      "accesstoken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie =
-      "role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("accesstoken");
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("user");
 
-    window.location.href = "/sign-in";
+    sessionStorage.clear();
+
+    deleteCookie("accessToken");
+    deleteCookie("accesstoken");
+    deleteCookie("token");
+    deleteCookie("role");
+
+    router.replace("/sign-in");
+
+    setTimeout(() => {
+      window.location.href = "/sign-in";
+    }, 100);
   }
 
   return (
@@ -85,7 +100,10 @@ export function AppVendorSidebar() {
       <SidebarContent className="bg-[#fff7f7] px-3 py-5">
         <SidebarMenu className="space-y-2">
           {menuItems.map((item) => {
-            const isActive = pathname === item.url;
+            const Icon = item.icon;
+
+            const isActive =
+              pathname === item.url || pathname.startsWith(`${item.url}/`);
 
             return (
               <SidebarMenuItem key={item.title}>
@@ -98,7 +116,7 @@ export function AppVendorSidebar() {
                   }`}
                 >
                   <Link href={item.url} className="flex items-center gap-3">
-                    <item.icon
+                    <Icon
                       className={`h-5 w-5 ${
                         isActive ? "text-white" : "text-[#7f1d1d]"
                       }`}
