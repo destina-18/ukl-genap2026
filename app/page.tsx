@@ -464,9 +464,51 @@ export default function Home() {
 
           <FadeIn delay={200}>
             <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-gray-600">
-              Customer bisa melihat menu, vendor bisa mengelola makanan, dan admin
-              bisa memantau data sistem.
+              KantinKlik hadir untuk menyederhanakan ekosistem kantin sekolah,
+              dari pemesanan makanan hingga pengelolaan vendor, semua dalam satu
+              platform yang mudah digunakan.
             </p>
+          </FadeIn>
+
+          <FadeIn delay={300}>
+            <div className="mx-auto mt-16 grid max-w-4xl gap-6 sm:grid-cols-3">
+              {[
+                {
+                  emoji: "👥",
+                  title: "Untuk customer",
+                  desc: "Pesan makanan tanpa antri, pantau status order real-time, dan simpan struk digital.",
+                },
+                {
+                  emoji: "🏪",
+                  title: "Untuk vendor",
+                  desc: "Kelola menu, terima order masuk, dan pantau pendapatan langsung dari dashboard.",
+                },
+                {
+                  emoji: "👤",
+                  title: "Untuk admin",
+                  desc: "Atur data vendor, kategori menu, dan pantau seluruh aktivitas kantin dalam satu tempat.",
+                },
+              ].map(({ emoji, title, desc }) => (
+                <div
+                  key={title}
+                  className="rounded-2xl border border-gray-100 bg-[#fff7f7] p-6 text-left"
+                >
+                  <div className="mb-3 text-2xl">{emoji}</div>
+                  <h3 className="font-bold text-gray-900">{title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-gray-500">{desc}</p>
+                </div>
+              ))}
+            </div>
+          </FadeIn>
+
+          <FadeIn delay={400}>
+            <Link
+              href="/sign-in"
+              className="mt-12 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#7f1d1d] to-[#450a0a] px-10 py-4 font-bold text-white shadow-xl shadow-red-900/20 transition hover:scale-105"
+            >
+              Mulai Sekarang
+              <ArrowRight className="h-5 w-5" />
+            </Link>
           </FadeIn>
         </section>
       </div>
